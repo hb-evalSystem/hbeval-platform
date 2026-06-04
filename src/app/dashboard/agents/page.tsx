@@ -7,10 +7,12 @@ import { Bot, Plus, ArrowRight, Activity } from 'lucide-react'
 export default async function AgentsPage() {
   const supabase = createClient()
 
-  const { data: agents = [] } = await supabase
+ const { data: agentsData } = await supabase
     .from('agents')
     .select('id, name, description, agent_id, plan_type, evaluation_limit, evaluations_this_month, created_at, is_active')
     .order('created_at', { ascending: false })
+
+  const agents = agentsData ?? []
 
   return (
     <div className="max-w-4xl animate-fade-in">
