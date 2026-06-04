@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Custom properties — single source of truth for the design system ── */
+:root {
+  --canvas:       #060c18;
+  --surface:      rgba(255,255,255,0.04);
+  --surface-hover:rgba(255,255,255,0.07);
+  --border:       rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.15);
+  --text:         #f1f5f9;
+  --text-muted:   #64748b;
+  --brand:        #2563eb;
+  --brand-glow:   rgba(37,99,235,0.20);
+  --safe:         #10b981;
+  --safe-glow:    rgba(16,185,129,0.15);
+  --unsafe:       #ef4444;
+  --unsafe-glow:  rgba(239,68,68,0.15);
+}
+
+@layer base {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--text);
+    font-family: Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    /* Subtle radial glow at top center — the signature background effect */
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(37,99,235,0.12), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 80%,  rgba(124,58,237,0.06), transparent);
+  }
+}
+
+@layer components {
+  /* Glass card — the primary surface for all content blocks */
+  .card {
+    @apply rounded-xl border;
+    background: var(--surface);
+    border-color: var(--border);
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .card:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+
+  /* Metric badge */
+  .badge-safe   { @apply text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded-full px-2 py-0.5 text-xs font-medium; }
+  .badge-unsafe { @apply text-red-400    bg-red-400/10    border border-red-400/20    rounded-full px-2 py-0.5 text-xs font-medium; }
+
+  /* Primary button */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white
+           transition-all duration-200 cursor-pointer;
+    background: var(--brand);
+    box-shadow: 0 0 20px var(--brand-glow);
+  }
+  .btn-primary:hover { filter: brightness(1.15); box-shadow: 0 0 28px var(--brand-glow); }
+
+  /* Secondary / ghost button */
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-slate-200
+           border transition-all duration-200 cursor-pointer;
+    background: var(--surface);
+    border-color: var(--border-strong);
+  }
+  .btn-secondary:hover { background: var(--surface-hover); }
+
+  /* Monospace code block */
+  .code-inline {
+    @apply px-1.5 py-0.5 rounded text-xs font-mono;
+    background: rgba(255,255,255,0.07);
+    color: #93c5fd;
+  }
+
+  /* Section header */
+  .section-label {
+    @apply text-xs font-semibold uppercase tracking-widest;
+    color: var(--brand);
+  }
+}
+
+/* ── Scrollbar — subtle, matches the dark theme ── */
+::-webkit-scrollbar       { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+
+/* ── Input / Select reset for dark theme ── */
+input, select, textarea {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-glow);
+}
