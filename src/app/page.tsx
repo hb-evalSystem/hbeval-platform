@@ -121,7 +121,7 @@ function LiveProof() {
           </p>
 
           {/* Metrics grid */}
-          <div className="grid grid-cols-5 gap-3 mb-6">
+       <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-6">
             {[
               { label: 'PEI', value: '1.000', status: 'perfect', desc: 'Planning Efficiency' },
               { label: 'IRS', value: '1.000', status: 'perfect', desc: 'Intentional Recovery' },
