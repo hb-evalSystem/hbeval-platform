@@ -1,10 +1,10 @@
 'use client'
 // app/dashboard/agents/new/page.tsx
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 // Create a new agent via the secure server endpoint /api/agents/provision.
 // The browser never generates or sees the master key. On success the server
 // returns the three credentials ONCE; we display them with a clear, Stripe-style
-// "save these now â€” they will not be shown again" warning, and block navigation
+// "save these now — they will not be shown again" warning, and block navigation
 // until the user confirms they have saved them.
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -60,7 +60,7 @@ export default function NewAgentPage() {
     setTimeout(() => setCopied(''), 1500)
   }
 
-  // â”€â”€ Success view: show the three credentials exactly once â”€â”€
+  // ── Success view: show the three credentials exactly once ──
   if (creds && agent) {
     const rows: { label: string; key: keyof Credentials; hint: string }[] = [
       { label: 'API Key',        key: 'api_key',        hint: 'Identifies your agent.' },
@@ -74,8 +74,8 @@ export default function NewAgentPage() {
             <KeyRound size={18} className="text-emerald-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">Agent created â€” save your keys</h1>
-            <p className="text-slate-500 text-sm">{agent.name} Â· <span className="font-mono">{agent.agent_id}</span></p>
+            <h1 className="text-xl font-bold text-white">Agent created — save your keys</h1>
+            <p className="text-slate-500 text-sm">{agent.name} · <span className="font-mono">{agent.agent_id}</span></p>
           </div>
         </div>
 
@@ -85,7 +85,7 @@ export default function NewAgentPage() {
           <div>
             <p className="font-medium mb-1">These secrets are shown only once.</p>
             <p className="text-amber-300/80 leading-relaxed">
-              The AES key and signing secret cannot be retrieved later â€” they are
+              The AES key and signing secret cannot be retrieved later — they are
               stored encrypted and never displayed again. Copy all three into a
               safe place now. If you lose them, you can rotate the agent's keys.
             </p>
@@ -124,7 +124,7 @@ export default function NewAgentPage() {
     )
   }
 
-  // â”€â”€ Create form â”€â”€
+  // ── Create form ──
   return (
     <div className="max-w-xl animate-fade-in">
       <Link href="/dashboard/agents"
@@ -161,7 +161,7 @@ export default function NewAgentPage() {
 
           <div>
             <label className="block text-sm text-slate-400 mb-1.5">
-              Agent ID <span className="ml-2 text-xs text-slate-600">(optional â€” auto-generated if blank)</span>
+              Agent ID <span className="ml-2 text-xs text-slate-600">(optional — auto-generated if blank)</span>
             </label>
             <input type="text" value={agentIdCustom} onChange={e => setAgentIdCustom(e.target.value)}
                    placeholder="e.g. support-agent-v2"
@@ -180,7 +180,7 @@ export default function NewAgentPage() {
           <div className="pt-2 flex items-center gap-3">
             <button type="submit" disabled={loading || !name.trim()} className="btn-primary">
               <Sparkles size={14} />
-              {loading ? 'Creatingâ€¦' : 'Create agent'}
+              {loading ? 'Creating…' : 'Create agent'}
             </button>
             <Link href="/dashboard/agents" className="btn-secondary text-sm">Cancel</Link>
           </div>
