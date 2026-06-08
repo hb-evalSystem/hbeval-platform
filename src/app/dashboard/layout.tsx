@@ -1,7 +1,13 @@
 // app/dashboard/layout.tsx  — Server Component
-// This layout wraps every page under /dashboard. It verifies the session
-// server-side (so there's never a flash of unauthenticated content), then
-// renders the persistent sidebar and top bar around the page content.
+// Wraps every /dashboard page. Verifies the session server-side, fetches the
+// user's aggregate usage for the sidebar meter, then renders the responsive
+// sidebar + main content.
+//
+// RESPONSIVE FIX: the main content uses `lg:ml-64` (margin only on large
+// screens) instead of a fixed `ml-64`. On mobile there is no left margin and
+// the sidebar is an overlay drawer, so content fills the width with no
+// horizontal scrolling. Top padding on mobile (`pt-16`) leaves room for the
+// fixed hamburger button.
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Sidebar from '@/components/layout/Sidebar'
@@ -13,15 +19,22 @@ export default async function DashboardLayout({
 }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
-  // This should be caught by middleware first, but acts as a second
-  // guarantee that unauthenticated requests never reach dashboard pages.
   if (!user) redirect('/login')
 
+  // Aggregate usage across the user's agents for the sidebar meter.
+  // RLS guarantees only this user's agents are returned.
+  const { data: agents } = await supabase
+    .from('agents')
+    .select('plan_type, evaluation_limit, evaluations_this_month')
+
+  const used  = (agents || []).reduce((s, a) => s + (a.evaluations_this_month || 0), 0)
+  const limit = (agents || []).reduce((s, a) => s + (a.evaluation_limit || 0), 0) || 500
+  const plan  = (agents || [])[0]?.plan_type || 'free'
+
   return (
-    <div className="flex min-h-screen">
-      <Sidebar user={user} />
-      <main className="flex-1 ml-64 p-8 min-h-screen">
+    <div className="min-h-screen">
+      <Sidebar user={user} usage={{ used, limit, plan }} />
+      <main className="lg:ml-64 px-4 sm:px-6 lg:px-8 pt-16 lg:pt-8 pb-10 min-h-screen">
         {children}
       </main>
     </div>
