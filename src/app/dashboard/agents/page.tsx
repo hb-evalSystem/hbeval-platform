@@ -7,24 +7,22 @@ import { Bot, Plus, ArrowRight, Activity } from 'lucide-react'
 export default async function AgentsPage() {
   const supabase = createClient()
 
- const { data: agentsData } = await supabase
+  const { data: agents = [] } = await supabase
     .from('agents')
     .select('id, name, description, agent_id, plan_type, evaluation_limit, evaluations_this_month, created_at, is_active')
     .order('created_at', { ascending: false })
 
-  const agents = agentsData ?? []
-
   return (
     <div className="max-w-4xl animate-fade-in">
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white mb-1">My Agents</h1>
           <p className="text-slate-500 text-sm">
-            Each agent has its own API key, usage quota, and evaluation history.
-            You can have multiple agents — one per project or per deployment environment.
+            Each agent has its own API key and evaluation history. Your monthly
+            evaluation allowance is shared across all your agents.
           </p>
         </div>
-        <Link href="/dashboard/agents/new" className="btn-primary text-sm">
+        <Link href="/dashboard/agents/new" className="btn-primary text-sm shrink-0 self-start">
           <Plus size={15} /> New Agent
         </Link>
       </div>
