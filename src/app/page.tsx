@@ -90,7 +90,7 @@ function Hero() {
                       color: '#93c5fd' }}>
           pip install hb-eval-sdk
           <span className="text-slate-500">·</span>
-          <span className="text-slate-400 font-sans font-normal">v2.0.0 on PyPI</span>
+          <span className="text-slate-400 font-sans font-normal">v2.1.0 on PyPI</span>
         </div>
       </div>
     </section>
@@ -121,7 +121,7 @@ function LiveProof() {
           </p>
 
           {/* Metrics grid */}
-       <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-6">
+          <div className="grid grid-cols-5 gap-3 mb-6">
             {[
               { label: 'PEI', value: '1.000', status: 'perfect', desc: 'Planning Efficiency' },
               { label: 'IRS', value: '1.000', status: 'perfect', desc: 'Intentional Recovery' },
@@ -325,7 +325,7 @@ function Footer() {
         <div className="flex items-center gap-2 text-white font-semibold">
           <Shield size={18} className="text-blue-500" />
           HB-Eval <span className="text-blue-500">OS</span>
-          <span className="text-slate-600 font-normal text-sm ml-2">v2.0.0</span>
+          <span className="text-slate-600 font-normal text-sm ml-2">v2.1.0</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-6 text-sm text-slate-500">
@@ -336,6 +336,8 @@ function Footer() {
           <a href="https://hbeval-verify-hxkrf5egzvp5qmvhs5wqcq.streamlit.app/" target="_blank" rel="noopener"
              className="hover:text-slate-300 transition-colors">Verify Results</a>
           <Link href="/pricing" className="hover:text-slate-300 transition-colors">Pricing</Link>
+          <Link href="/legal/terms" className="hover:text-slate-300 transition-colors">Terms</Link>
+          <Link href="/legal/privacy" className="hover:text-slate-300 transition-colors">Privacy</Link>
           <a href="mailto:gasimadam119@gmail.com" className="hover:text-slate-300 transition-colors">Contact</a>
         </div>
 
