@@ -23,13 +23,16 @@ export default async function DashboardLayout({
 
   // Aggregate usage across the user's agents for the sidebar meter.
   // RLS guarantees only this user's agents are returned.
+  // IMPORTANT: the limit is per ACCOUNT (by plan), not the sum of per-agent
+  // limits — a user with 3 agents still shares ONE pool of 500 (free).
   const { data: agents } = await supabase
     .from('agents')
-    .select('plan_type, evaluation_limit, evaluations_this_month')
+    .select('plan_type, evaluations_this_month')
 
-  const used  = (agents || []).reduce((s, a) => s + (a.evaluations_this_month || 0), 0)
-  const limit = (agents || []).reduce((s, a) => s + (a.evaluation_limit || 0), 0) || 500
+  const ACCOUNT_LIMITS: Record<string, number> = { free: 500, pro: 10000, enterprise: 100000 }
   const plan  = (agents || [])[0]?.plan_type || 'free'
+  const used  = (agents || []).reduce((s, a) => s + (a.evaluations_this_month || 0), 0)
+  const limit = ACCOUNT_LIMITS[plan] || 500
 
   return (
     <div className="min-h-screen">
