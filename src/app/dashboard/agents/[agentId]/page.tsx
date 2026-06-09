@@ -303,7 +303,8 @@ export default function AgentDetailPage() {
           </div>
         ) : (
           <div className="card overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[560px]">
               <thead>
                 <tr className="border-b text-left" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                   {['Verdict', 'PEI', 'IRS', 'FRR', 'TI', 'CSI', 'When'].map(h => (
@@ -335,6 +336,7 @@ export default function AgentDetailPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>
