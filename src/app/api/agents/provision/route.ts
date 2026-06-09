@@ -25,7 +25,10 @@ import { generateAgentSecrets } from '@/lib/crypto/secrets'
 
 export const runtime = 'nodejs'        // crypto module needs the Node runtime, not edge
 
-const MAX_AGENTS_PER_USER = 25
+// Free accounts may create up to 3 agents. Paid plans are effectively
+// unlimited (a high safety ceiling guards against runaway abuse).
+const FREE_AGENT_CAP = 3
+const PAID_AGENT_CAP = 1000
 const AGENT_ID_RE = /^[a-zA-Z0-9\-_]+$/
 
 export async function POST(req: NextRequest) {
@@ -51,7 +54,13 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // ── 3. Enforce per-user agent cap (anti-abuse) ──
+  // ── 3. Enforce per-plan agent cap (anti-abuse + free-tier limit) ──
+  // Determine the account plan from any existing agent (defaults to free).
+  const { data: planRow } = await supabaseAdmin
+    .from('agents').select('plan_type').eq('user_id', user.id).limit(1).maybeSingle()
+  const plan = planRow?.plan_type || 'free'
+  const cap = plan === 'free' ? FREE_AGENT_CAP : PAID_AGENT_CAP
+
   const { count, error: countErr } = await supabaseAdmin
     .from('agents')
     .select('id', { count: 'exact', head: true })
@@ -59,11 +68,11 @@ export async function POST(req: NextRequest) {
   if (countErr) {
     return NextResponse.json({ error: 'Could not verify account state.' }, { status: 500 })
   }
-  if ((count ?? 0) >= MAX_AGENTS_PER_USER) {
-    return NextResponse.json(
-      { error: `Agent limit reached (${MAX_AGENTS_PER_USER}). Delete an agent or contact support.` },
-      { status: 409 },
-    )
+  if ((count ?? 0) >= cap) {
+    const msg = plan === 'free'
+      ? `Free accounts are limited to ${FREE_AGENT_CAP} agents. Upgrade to Pro for more.`
+      : `Agent limit reached (${cap}). Contact support.`
+    return NextResponse.json({ error: msg }, { status: 409 })
   }
 
   // ── 4. Default agent_id if not provided ──
