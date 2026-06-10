@@ -89,7 +89,11 @@ export default function AgentDetailPage() {
     async function load() {
       const { data: agentData } = await supabase
         .from('agents')
-        .select('*')
+        // SECURITY: explicit safe columns only — never select('*'), which would
+        // pull aes_key_encrypted / hmac_secret_encrypted into the browser.
+        // Those ciphertexts are useless without the master key, but secrets
+        // (even encrypted) must never reach the client.
+        .select('id, name, description, agent_id, api_key, plan_type, evaluation_limit, evaluations_this_month, is_active, created_at')
         .eq('id', agentId)
         .single()
 
