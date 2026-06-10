@@ -10,7 +10,8 @@ import Link from 'next/link'
 import {
   Bot, Copy, Check, Eye, EyeOff, ArrowLeft, Activity,
   Shield, TrendingUp, AlertCircle, CheckCircle, XCircle,
-  Zap, Brain, BarChart2, Clock
+  Zap, Brain, BarChart2, Clock, Database, HelpCircle,
+  Lightbulb, Loader2, X
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -27,7 +28,38 @@ interface Evaluation {
   created_at: string
 }
 
-// ── Metric progress bar ─────────────────────────────────────────────────────
+// ── EDM Layer 1 — selective-storage governance thresholds ───────────────────
+// These mirror the Gateway's edm_guard exactly (PEI>=0.80 AND TI>=4.0). An
+// evaluation is consolidated into the certified memory IFF it clears BOTH.
+// We derive the badge straight from the row's metrics — no extra query needed,
+// because the guard's rule is fully determined by PEI and TI.
+const EDM_PEI_THRESHOLD = 0.80
+const EDM_TI_THRESHOLD = 4.0
+
+function memoryStatus(pei: number | null, ti: number | null): {
+  stored: boolean; label: string; reason: string
+} {
+  const hasBoth = pei !== null && ti !== null
+  const stored = hasBoth && pei >= EDM_PEI_THRESHOLD && ti >= EDM_TI_THRESHOLD
+  if (stored) {
+    return { stored: true, label: 'Stored', reason: 'Met PEI ≥ 0.80 and TI ≥ 4.0 — consolidated to certified memory.' }
+  }
+  if (!hasBoth) {
+    return { stored: false, label: 'Not stored', reason: 'Missing PEI or TI — cannot qualify for certified memory.' }
+  }
+  const fails: string[] = []
+  if (pei! < EDM_PEI_THRESHOLD) fails.push(`PEI ${pei!.toFixed(2)} < 0.80`)
+  if (ti! < EDM_TI_THRESHOLD) fails.push(`TI ${ti!.toFixed(1)} < 4.0`)
+  return { stored: false, label: 'Not stored', reason: `Below quality threshold: ${fails.join(', ')}.` }
+}
+
+// Build the compact plan summary the Gateway expects, mirroring edm_guard's
+// _build_summary shape so explanations are grounded against comparable text.
+function planSummaryFor(ev: Evaluation): string {
+  return `domain=unspecified; pei=${ev.pei_score}; ti=${ev.ti_score ?? 'n/a'}; verdict=${ev.verdict}`
+}
+
+
 function MetricBar({
   label, icon: Icon, value, tier2, color
 }: { label: string; icon: any; value: number | null; tier2: number; color: string }) {
@@ -85,6 +117,12 @@ export default function AgentDetailPage() {
   const [renaming,     setRenaming]     = useState(false)
   const [newName,      setNewName]      = useState('')
 
+  // Layer 2 (HCI-EDM) explanation state
+  const [explainFor,   setExplainFor]   = useState<string | null>(null)  // evaluation id being explained
+  const [explainData,  setExplainData]  = useState<any>(null)
+  const [explainLoading, setExplainLoading] = useState(false)
+  const [explainError, setExplainError] = useState<string | null>(null)
+
   useEffect(() => {
     async function load() {
       const { data: agentData } = await supabase
@@ -126,6 +164,39 @@ export default function AgentDetailPage() {
     await supabase.from('agents').update({ name: newName.trim() }).eq('id', agent.id)
     setAgent({ ...agent, name: newName.trim() })
     setRenaming(false)
+  }
+
+  // Layer 2 — ask the performance-grounded interpreter why this verdict stands.
+  // The browser never signs anything: it calls our server route, which decrypts
+  // the agent secrets and relays a signed request to the Gateway.
+  async function requestExplanation(ev: Evaluation) {
+    if (!agent) return
+    // Toggle off if the same row is clicked again.
+    if (explainFor === ev.id) {
+      setExplainFor(null); setExplainData(null); setExplainError(null)
+      return
+    }
+    setExplainFor(ev.id)
+    setExplainData(null)
+    setExplainError(null)
+    setExplainLoading(true)
+    try {
+      const res = await fetch('/api/agents/explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agent_row_id: agent.id, plan_summary: planSummaryFor(ev) }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setExplainError(data?.error || 'Could not load explanation.')
+      } else {
+        setExplainData(data)
+      }
+    } catch {
+      setExplainError('Could not reach the explanation service.')
+    } finally {
+      setExplainLoading(false)
+    }
   }
 
   if (loading) return (
@@ -297,6 +368,37 @@ export default function AgentDetailPage() {
           <span className="text-slate-600 font-normal text-xs">({n} total)</span>
         </h2>
 
+        {/* Eval-Driven Memory (EDM) + HCI-EDM — the reliability memory layers */}
+        {n > 0 && (
+          <div className="card p-4 mb-3" style={{ borderColor: 'rgba(139,92,246,0.18)' }}>
+            <div className="grid sm:grid-cols-2 gap-3 text-xs">
+              <div className="flex gap-2">
+                <Database size={15} className="text-emerald-400 shrink-0 mt-0.5" />
+                <div>
+                  <div className="text-slate-200 font-medium mb-0.5">Quality-governed memory</div>
+                  <p className="text-slate-500 leading-relaxed">
+                    A run is consolidated into certified memory only when it clears
+                    <span className="text-slate-400"> PEI ≥ 0.80 and TI ≥ 4.0</span> together.
+                    The <span className="text-emerald-300">Memory</span> column shows that decision
+                    transparently — the store stays clean of low-quality runs.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Lightbulb size={15} className="shrink-0 mt-0.5" style={{ color: '#c4b5fd' }} />
+                <div>
+                  <div className="text-slate-200 font-medium mb-0.5">Performance-grounded explanations</div>
+                  <p className="text-slate-500 leading-relaxed">
+                    <span style={{ color: '#c4b5fd' }}>Why?</span> grounds each verdict in a specific
+                    certified episode and cites its real metrics — or, when no precedent qualifies,
+                    it honestly defers to human review rather than inventing a rationale.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {n === 0 ? (
           <div className="card p-10 text-center">
             <Activity size={28} className="text-slate-600 mx-auto mb-3" />
@@ -311,13 +413,17 @@ export default function AgentDetailPage() {
             <table className="w-full text-sm min-w-[560px]">
               <thead>
                 <tr className="border-b text-left" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                  {['Verdict', 'PEI', 'IRS', 'FRR', 'TI', 'CSI', 'When'].map(h => (
+                  {['Verdict', 'PEI', 'IRS', 'FRR', 'TI', 'CSI', 'When', 'Memory', 'Why'].map(h => (
                     <th key={h} className="px-4 py-3 text-xs font-medium text-slate-500">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {evaluations.slice(0, 30).map((ev, i) => (
+                {evaluations.slice(0, 30).map((ev, i) => {
+                  const mem = memoryStatus(ev.pei_score, ev.ti_score)
+                  const isOpen = explainFor === ev.id
+                  return (
+                  <>
                   <tr key={ev.id}
                       className="border-b transition-colors hover:bg-white/02"
                       style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
@@ -336,8 +442,77 @@ export default function AgentDetailPage() {
                         month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                       })}
                     </td>
+                    {/* Layer 1 — transparent EDM guard status (derived from PEI & TI) */}
+                    <td className="px-4 py-2.5">
+                      {mem.stored
+                        ? <span title={mem.reason}
+                                className="flex items-center gap-1 w-fit text-xs px-2 py-0.5 rounded-full"
+                                style={{ background: 'rgba(16,185,129,0.10)', color: '#6ee7b7' }}>
+                            <Database size={10}/> Stored
+                          </span>
+                        : <span title={mem.reason}
+                                className="flex items-center gap-1 w-fit text-xs px-2 py-0.5 rounded-full"
+                                style={{ background: 'rgba(148,163,184,0.10)', color: '#94a3b8' }}>
+                            <X size={10}/> Not stored
+                          </span>}
+                    </td>
+                    {/* Layer 2 — request a performance-grounded explanation */}
+                    <td className="px-4 py-2.5">
+                      <button onClick={() => requestExplanation(ev)}
+                              className="flex items-center gap-1 text-xs px-2 py-1 rounded-md transition-colors"
+                              style={{
+                                background: isOpen ? 'rgba(139,92,246,0.18)' : 'rgba(255,255,255,0.04)',
+                                color: isOpen ? '#c4b5fd' : '#94a3b8',
+                              }}>
+                        <HelpCircle size={11}/> Why?
+                      </button>
+                    </td>
                   </tr>
-                ))}
+                  {isOpen && (
+                    <tr style={{ background: 'rgba(139,92,246,0.04)' }}>
+                      <td colSpan={9} className="px-4 py-4">
+                        {explainLoading && (
+                          <div className="flex items-center gap-2 text-xs text-slate-400">
+                            <Loader2 size={13} className="animate-spin"/> Grounding an explanation in certified memory…
+                          </div>
+                        )}
+                        {!explainLoading && explainError && (
+                          <div className="flex items-center gap-2 text-xs text-amber-400">
+                            <AlertCircle size={13}/> {explainError}
+                          </div>
+                        )}
+                        {!explainLoading && !explainError && explainData && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              {explainData.grounded
+                                ? <span className="flex items-center gap-1 text-xs font-medium" style={{ color: '#c4b5fd' }}>
+                                    <Lightbulb size={12}/> Grounded explanation
+                                  </span>
+                                : <span className="flex items-center gap-1 text-xs font-medium text-amber-400">
+                                    <HelpCircle size={12}/> Uncertain — human review advised
+                                  </span>}
+                            </div>
+                            <p className="text-xs text-slate-300 leading-relaxed max-w-3xl">
+                              {explainData.explanation}
+                            </p>
+                            {explainData.grounded && explainData.cited_episode_id && (
+                              <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500 font-mono pt-1">
+                                <span>episode {String(explainData.cited_episode_id).slice(0, 8)}…</span>
+                                {typeof explainData.similarity === 'number' &&
+                                  <span>similarity {explainData.similarity.toFixed(2)}</span>}
+                                {explainData.evidence?.pei != null &&
+                                  <span>PEI {Number(explainData.evidence.pei).toFixed(2)}</span>}
+                                {explainData.evidence?.ti != null &&
+                                  <span>TI {Number(explainData.evidence.ti).toFixed(1)}</span>}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                  </>
+                )})}
               </tbody>
             </table>
             </div>
