@@ -53,10 +53,15 @@ function memoryStatus(pei: number | null, ti: number | null): {
   return { stored: false, label: 'Not stored', reason: `Below quality threshold: ${fails.join(', ')}.` }
 }
 
-// Build the compact plan summary the Gateway expects, mirroring edm_guard's
-// _build_summary shape so explanations are grounded against comparable text.
+// Build the compact plan summary for grounding. We mirror edm_guard's
+// _build_summary field ORDER and prefix as closely as the dashboard can —
+// the dashboard doesn't store the raw plan shape, so this is an honest
+// approximation, not a forced match. Closer text → higher cosine for runs
+// whose plans really are similar; dissimilar runs still fall below 0.87 and
+// correctly return "uncertain".
 function planSummaryFor(ev: Evaluation): string {
-  return `domain=unspecified; pei=${ev.pei_score}; ti=${ev.ti_score ?? 'n/a'}; verdict=${ev.verdict}`
+  const ti = ev.ti_score ?? 'n/a'
+  return `domain=unspecified; pei=${ev.pei_score}; ti=${ti}`
 }
 
 
@@ -410,11 +415,11 @@ export default function AgentDetailPage() {
         ) : (
           <div className="card overflow-hidden">
             <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[560px]">
+            <table className="w-full text-sm min-w-[820px]">
               <thead>
                 <tr className="border-b text-left" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                   {['Verdict', 'PEI', 'IRS', 'FRR', 'TI', 'CSI', 'When', 'Memory', 'Why'].map(h => (
-                    <th key={h} className="px-4 py-3 text-xs font-medium text-slate-500">{h}</th>
+                    <th key={h} className="px-4 py-3 text-xs font-medium text-slate-500 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -433,11 +438,11 @@ export default function AgentDetailPage() {
                         : <span className="badge-unsafe flex items-center gap-1 w-fit"><XCircle size={10}/> UNSAFE</span>}
                     </td>
                     {(['pei_score','irs_score','frr_score','ti_score','csi_score'] as const).map(k => (
-                      <td key={k} className="px-4 py-2.5 font-mono text-xs text-slate-400">
+                      <td key={k} className="px-4 py-2.5 font-mono text-xs text-slate-400 whitespace-nowrap">
                         {ev[k] !== null ? (ev[k] as number).toFixed(k === 'ti_score' ? 1 : 3) : '—'}
                       </td>
                     ))}
-                    <td className="px-4 py-2.5 text-xs text-slate-600">
+                    <td className="px-4 py-2.5 text-xs text-slate-600 whitespace-nowrap">
                       {new Date(ev.created_at).toLocaleString('en', {
                         month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                       })}
