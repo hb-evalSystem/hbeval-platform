@@ -4,7 +4,7 @@
 // All sections are static marketing content — no auth or data fetching here.
 
 import Link from 'next/link'
-import { Shield, Zap, Brain, BarChart2, Clock, ChevronRight, ArrowRight, Github, ExternalLink } from 'lucide-react'
+import { Shield, Zap, Brain, BarChart2, Clock, ChevronRight, ArrowRight, Github, ExternalLink, Database, Lightbulb } from 'lucide-react'
 
 // ─────────────────────────────────────────────────────────
 // Navbar
@@ -21,6 +21,7 @@ function Navbar() {
 
       <div className="hidden md:flex items-center gap-8 text-sm text-slate-400">
         <a href="#metrics"   className="hover:text-white transition-colors">Metrics</a>
+        <a href="#memory"    className="hover:text-white transition-colors">Memory</a>
         <a href="#proof"     className="hover:text-white transition-colors">Live Proof</a>
         <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
         <a href="https://github.com/hb-evalSystem/HB-System" target="_blank" rel="noopener"
@@ -352,6 +353,87 @@ function Footer() {
 // ─────────────────────────────────────────────────────────
 // Page export
 // ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+// Reliability Memory — the two governed-memory layers (EDM + HCI-EDM)
+// A real, deployed achievement: not just metrics, but a memory that is
+// governed by those metrics, and explanations grounded in it.
+// ─────────────────────────────────────────────────────────
+function MemoryLayers() {
+  return (
+    <section id="memory" className="py-20 px-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-14">
+          <p className="section-label mb-3">Beyond Scoring</p>
+          <h2 className="text-4xl font-bold text-white mb-4">
+            A memory governed by reliability — and explanations grounded in it
+          </h2>
+          <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            Most systems remember everything and explain with confident guesses.
+            HB-Eval OS does the opposite: it remembers only what proved reliable,
+            and it explains only what it can ground in a certified record.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-5">
+          {/* Layer 1 — EDM */}
+          <div className="card p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center"
+                   style={{ background: 'rgba(16,185,129,0.12)' }}>
+                <Database size={18} className="text-emerald-400" />
+              </div>
+              <div>
+                <p className="section-label text-emerald-400 mb-0.5">Layer 1 · EDM</p>
+                <h3 className="text-white font-semibold">Quality-governed memory</h3>
+              </div>
+            </div>
+            <p className="text-slate-400 text-sm leading-relaxed mb-4">
+              Every run is judged before it is remembered. A trajectory is
+              consolidated into certified memory only when it clears
+              <span className="text-emerald-300"> PEI ≥ 0.80 and TI ≥ 4.0</span> at
+              the same time. Everything else is discarded as noise — so the store
+              never fills with low-quality runs.
+            </p>
+            <div className="text-xs text-slate-500 font-mono rounded-lg px-3 py-2"
+                 style={{ background: 'rgba(255,255,255,0.03)' }}>
+              if PEI ≥ 0.80 and TI ≥ 4.0 → consolidate · else → discard
+            </div>
+          </div>
+
+          {/* Layer 2 — HCI-EDM */}
+          <div className="card p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center"
+                   style={{ background: 'rgba(139,92,246,0.14)' }}>
+                <Lightbulb size={18} style={{ color: '#c4b5fd' }} />
+              </div>
+              <div>
+                <p className="section-label mb-0.5" style={{ color: '#c4b5fd' }}>Layer 2 · HCI-EDM</p>
+                <h3 className="text-white font-semibold">Performance-grounded explanations</h3>
+              </div>
+            </div>
+            <p className="text-slate-400 text-sm leading-relaxed mb-4">
+              Ask <span style={{ color: '#c4b5fd' }}>why</span> a verdict stands, and
+              the system answers from the record — citing a specific certified
+              episode and its real metrics. When no precedent is similar enough,
+              it does not invent a rationale: it honestly defers to human review.
+            </p>
+            <div className="text-xs text-slate-500 font-mono rounded-lg px-3 py-2"
+                 style={{ background: 'rgba(255,255,255,0.03)' }}>
+              cite episode if similarity ≥ 0.87 · else → defer to human
+            </div>
+          </div>
+        </div>
+
+        <p className="text-center text-slate-600 text-xs mt-8 max-w-2xl mx-auto">
+          Both layers are live in production and documented against the
+          peer-reviewed research they implement (EDM &amp; HCI-EDM).
+        </p>
+      </div>
+    </section>
+  )
+}
+
 export default function LandingPage() {
   return (
     <>
@@ -360,6 +442,7 @@ export default function LandingPage() {
         <Hero />
         <LiveProof />
         <MetricsSection />
+        <MemoryLayers />
         <HowItWorks />
         <PricingTeaser />
       </main>
