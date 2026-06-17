@@ -2,20 +2,21 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'HB-Eval OS — Reliability Operating System for Agentic AI',
+  title: 'HB-Eval — Reliability Evaluation Platform for Agentic AI',
   description:
-    'The first reliability certification framework for agentic AI. ' +
-    'Measure, certify, and monitor your AI agents with five battle-tested metrics.',
+    'The first reliability evaluation platform for agentic AI. ' +
+    'Measure and monitor your AI agents with five battle-tested metrics ' +
+    'under fault-injection stress testing.',
   metadataBase: new URL('https://hbeval.com'),
   openGraph: {
-    title: 'HB-Eval OS',
-    description: 'Reliability certification for agentic AI systems.',
+    title: 'HB-Eval',
+    description: 'Reliability evaluation for agentic AI systems.',
     url: 'https://hbeval.com',
-    siteName: 'HB-Eval OS',
+    siteName: 'HB-Eval',
     locale: 'en_US',
     type: 'website',
   },
-  twitter: { card: 'summary_large_image', title: 'HB-Eval OS' },
+  twitter: { card: 'summary_large_image', title: 'HB-Eval' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
