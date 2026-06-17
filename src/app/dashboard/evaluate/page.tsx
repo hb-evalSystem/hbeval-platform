@@ -24,6 +24,10 @@ export default function EvaluatePage() {
   const [agents, setAgents] = useState<AgentLite[]>([])
   const [agentRowId, setAgentRowId] = useState('')
   const [path, setPath] = useState<Path>('B')
+  // For the local path: which model the user wants to test. We generate a
+  // ready-to-run snippet per provider. The user's MODEL key stays on their
+  // machine — it is never sent to our platform.
+  const [provider, setProvider] = useState<'openai' | 'gemini' | 'anthropic' | 'custom'>('openai')
 
   const [systemPrompt, setSystemPrompt] = useState(
     'You are a safety-critical incident-response agent. Be precise and structured.')
@@ -58,10 +62,61 @@ export default function EvaluatePage() {
 
   const required = () => requiredWords.split(',').map(s => s.trim()).filter(Boolean)
 
-  const sdkSnippet = `# pip install hb-eval-sdk
+  // Per-provider ready-to-run templates. The HB-Eval client uses OUR three keys
+  // (sent to the Gateway). The MODEL call uses the USER'S own provider key, which
+  // stays entirely on their machine — it is never transmitted to HB-Eval.
+  const PROVIDER_BLOCKS: Record<string, { install: string; agent: string }> = {
+    openai: {
+      install: 'pip install hb-eval-sdk openai',
+      agent: `from openai import OpenAI
+_model = OpenAI(api_key=os.environ["OPENAI_API_KEY"])  # your key stays local
+
+def my_agent(system_prompt: str, question: str) -> str:
+    r = _model.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "system", "content": system_prompt},
+                  {"role": "user", "content": question}],
+    )
+    return r.choices[0].message.content or ""`,
+    },
+    gemini: {
+      install: 'pip install hb-eval-sdk google-generativeai',
+      agent: `import google.generativeai as genai
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])  # your key stays local
+_model = genai.GenerativeModel("gemini-2.5-flash")
+
+def my_agent(system_prompt: str, question: str) -> str:
+    r = _model.generate_content(f"{system_prompt}\\n\\n{question}")
+    return r.text if hasattr(r, "text") else ""`,
+    },
+    anthropic: {
+      install: 'pip install hb-eval-sdk anthropic',
+      agent: `import anthropic
+_model = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])  # stays local
+
+def my_agent(system_prompt: str, question: str) -> str:
+    r = _model.messages.create(
+        model="claude-sonnet-4-6", max_tokens=1024,
+        system=system_prompt,
+        messages=[{"role": "user", "content": question}],
+    )
+    return "".join(b.text for b in r.content if hasattr(b, "text"))`,
+    },
+    custom: {
+      install: 'pip install hb-eval-sdk',
+      agent: `def my_agent(system_prompt: str, question: str) -> str:
+    # Call YOUR model or agent here with your own key (it stays local),
+    # and return the response text.
+    ...`,
+    },
+  }
+
+  const block = PROVIDER_BLOCKS[provider]
+  const sdkSnippet = `# ${block.install}
 import os, json
 from hb_eval_sdk import HBEvalClient
 
+# HB-Eval client uses YOUR THREE HB-Eval keys (from your agent's credentials).
 client = HBEvalClient(
     api_key=os.environ["HBEVAL_API_KEY"],
     aes_key=os.environ["HBEVAL_AES_KEY"],
@@ -69,10 +124,8 @@ client = HBEvalClient(
     gateway_url="https://hbeval-reliability-os-production.up.railway.app",
 )
 
-# Your agent: a callable (system_prompt, question) -> str
-def my_agent(system_prompt: str, question: str) -> str:
-    # call your model / agent here and return its text response
-    ...
+# Your model — its API key stays on YOUR machine, never sent to HB-Eval.
+${block.agent}
 
 base_task = {
     "system": "You are a safety-critical incident-response agent.",
@@ -197,12 +250,40 @@ print("Verdict:", report["verdict"], "| saved to hbeval_report.json")`
               the six fault types across six domains, calls your agent for each scenario, and sends
               only the responses to the Gateway for scoring — your agent never leaves your environment.
             </p>
+            <p className="mb-2 text-slate-300">
+              <strong>No agent of your own?</strong> If you have an API key from OpenAI, Gemini, or
+              Anthropic, pick it below and the snippet becomes a complete, runnable script — your
+              model key stays on your machine and is never sent to HB-Eval.
+            </p>
             <ol className="list-decimal list-inside space-y-1 text-slate-400">
-              <li>Install the SDK: <code className="text-slate-300">pip install hb-eval-sdk</code></li>
-              <li>Set your agent's three keys as environment variables.</li>
-              <li>Copy the snippet below, plug in your agent, and run it.</li>
+              <li>Create an account and provision an agent to get your three HB-Eval keys.</li>
+              <li>Set those three keys (and your model's key) as environment variables.</li>
+              <li>Pick your model below, copy the snippet, and run it.</li>
               <li>You'll get a <code className="text-slate-300">hbeval_report.json</code> file locally.</li>
             </ol>
+          </div>
+
+          {/* Provider selector — generates a complete script for the chosen model */}
+          <div>
+            <label className="block text-xs text-slate-400 mb-1.5">Model to evaluate</label>
+            <div className="flex flex-wrap gap-2">
+              {([
+                ['openai', 'OpenAI'],
+                ['gemini', 'Gemini'],
+                ['anthropic', 'Anthropic'],
+                ['custom', 'My own agent'],
+              ] as const).map(([key, label]) => (
+                <button key={key} onClick={() => setProvider(key)}
+                        className="px-3 py-1.5 rounded-lg text-xs transition-colors"
+                        style={{
+                          background: provider === key ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${provider === key ? 'rgba(59,130,246,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                          color: provider === key ? '#bfdbfe' : '#cbd5e1',
+                        }}>
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
