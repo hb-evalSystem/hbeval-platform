@@ -11,20 +11,34 @@ import UpgradePanel from './UpgradePanel'
 export default async function BillingPage() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: agents } = await supabase.from('agents').select('plan_type')
-  const plan = (agents || [])[0]?.plan_type || 'free'
+  const { data: quota } = await supabase
+    .from('account_usage')
+    .select('plan_type')
+    .eq('user_id', user?.id)
+    .maybeSingle()
+  const plan = quota?.plan_type || 'free'
 
   const tiers = [
     {
       name: 'Free', price: '$0', tagline: 'For exploring and small projects',
-      features: ['500 evaluations / month', 'All five reliability metrics',
-                 'Diagnostic guidance', 'Community support'],
+      features: ['Up to 2 agents',
+                 '500 evaluations / month (shared across agents)',
+                 'All five reliability metrics (PEI, FRR, IRS, TI, CSI)',
+                 'Fault-injection battery + local path',
+                 'Full diagnostic guidance',
+                 'EDM memory — 3 retrievals',
+                 'Community support'],
       current: plan === 'free',
     },
     {
       name: 'Pro', price: 'Coming soon', tagline: 'For teams shipping to production',
-      features: ['Higher monthly limits', 'Formal Tier certification', 'Agent Passport',
-                 'Performance-grounded explanations', 'Priority support'],
+      features: ['Up to 10 agents',
+                 '5,000 evaluations / month (shared across agents)',
+                 'Verified evaluation path (platform-run, tamper-proof)',
+                 'Reliability-tier qualification (Meets Tier 1 / 2 / 3)',
+                 'HCI-EDM performance-grounded explanations',
+                 'Unlimited EDM retrieval',
+                 'Priority support'],
       current: plan === 'pro', highlight: true,
     },
   ]
