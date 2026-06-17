@@ -21,22 +21,24 @@ export default async function DashboardLayout({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Aggregate usage across the user's agents for the sidebar meter.
-  // RLS guarantees only this user's agents are returned.
-  // IMPORTANT: the limit is per ACCOUNT (by plan), not the sum of per-agent
-  // limits — a user with 3 agents still shares ONE pool of 500 (free).
-  const { data: agents } = await supabase
-    .from('agents')
-    .select('plan_type, evaluations_this_month')
+  // The monthly evaluation pool belongs to the ACCOUNT and is shared across all
+  // of the user's agents (migration 08). Read it from account_usage — the single
+  // source of truth — rather than summing per-agent counters.
+  const { data: quota } = await supabase
+    .from('account_usage')
+    .select('plan_type, evaluation_limit, evaluations_this_month, evaluations_today')
+    .eq('user_id', user.id)
+    .maybeSingle()
 
-  const ACCOUNT_LIMITS: Record<string, number> = { free: 500, pro: 10000, enterprise: 100000 }
-  const plan  = (agents || [])[0]?.plan_type || 'free'
-  const used  = (agents || []).reduce((s, a) => s + (a.evaluations_this_month || 0), 0)
-  const limit = ACCOUNT_LIMITS[plan] || 500
+  const ACCOUNT_LIMITS: Record<string, number> = { free: 500, pro: 5000, enterprise: 2147483647 }
+  const plan      = quota?.plan_type || 'free'
+  const used      = quota?.evaluations_this_month ?? 0
+  const usedToday = quota?.evaluations_today ?? 0
+  const limit     = quota?.evaluation_limit || ACCOUNT_LIMITS[plan] || 500
 
   return (
     <div className="min-h-screen">
-      <Sidebar user={user} usage={{ used, limit, plan }} />
+      <Sidebar user={user} usage={{ used, limit, usedToday, plan }} />
       <main className="lg:ml-64 px-4 sm:px-6 lg:px-8 pt-16 lg:pt-8 pb-10 min-h-screen">
         {children}
       </main>
