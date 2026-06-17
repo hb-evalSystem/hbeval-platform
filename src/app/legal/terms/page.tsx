@@ -34,10 +34,13 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-white font-semibold mb-2">2. The Service</h2>
-            <p>HB-Eval evaluates the reliability of AI agents and issues diagnostic results
-            and, where applicable, certification tiers. Results are provided for informational
-            and engineering purposes. They are not a warranty of any agent's fitness for a
-            particular purpose, and you remain responsible for how you deploy your agents.</p>
+            <p>HB-Eval evaluates the operational reliability of AI agents by subjecting
+            them to a fault-injection battery and computing five reliability metrics
+            (PEI, FRR, IRS, TI, CSI). Based on these metrics it reports diagnostic
+            results and, where the thresholds are met, an internal reliability-tier
+            qualification (for example, "Meets Tier 1"). This is a performance
+            classification produced by HB-Eval; it is not an accredited safety
+            certification and is not issued by any external certification body.</p>
           </section>
 
           <section>
