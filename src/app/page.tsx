@@ -343,7 +343,7 @@ function Footer() {
         </div>
 
         <div className="text-xs text-slate-600">
-          © 2026 HB-Eval OS · MIT License
+          © 2026 HB-Eval · MIT License
         </div>
       </div>
     </footer>
@@ -369,7 +369,7 @@ function MemoryLayers() {
           </h2>
           <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed">
             Most systems remember everything and explain with confident guesses.
-            HB-Eval OS does the opposite: it remembers only what proved reliable,
+            HB-Eval does the opposite: it remembers only what proved reliable,
             and it explains only what it can ground in a certified record.
           </p>
         </div>
