@@ -5,7 +5,7 @@
 import Link from 'next/link'
 import { Shield, ArrowLeft } from 'lucide-react'
 
-export const metadata = { title: 'Privacy Policy — HB-Eval OS' }
+export const metadata = { title: 'Privacy Policy — HB-Eval' }
 
 const UPDATED = 'June 2026'
 
