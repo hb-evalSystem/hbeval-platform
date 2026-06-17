@@ -14,7 +14,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import {
   Shield, LayoutDashboard, Bot, KeyRound,
-  CreditCard, Settings, LogOut, ExternalLink, Menu, X,
+  CreditCard, Settings, LogOut, ExternalLink, Menu, X, Beaker,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
@@ -23,6 +23,7 @@ import UsageMeter from '@/components/ui/UsageMeter'
 const NAV_ITEMS = [
   { href: '/dashboard',          icon: LayoutDashboard, label: 'Overview'  },
   { href: '/dashboard/agents',   icon: Bot,             label: 'My Agents' },
+  { href: '/dashboard/evaluate', icon: Beaker,          label: 'Evaluate'  },
   { href: '/dashboard/api-keys', icon: KeyRound,        label: 'API Keys'  },
   { href: '/dashboard/billing',  icon: CreditCard,      label: 'Billing'   },
   { href: '/dashboard/settings', icon: Settings,        label: 'Settings'  },
