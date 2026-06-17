@@ -287,6 +287,7 @@ function EvaluationPaths() {
             <ul className="text-sm text-slate-400 space-y-1.5">
               <li>• <code className="text-slate-300">pip install hb-eval-sdk</code></li>
               <li>• Call <code className="text-slate-300">evaluate_with_battery()</code></li>
+              <li>• No agent? Use an OpenAI / Gemini / Anthropic key — it stays on your machine</li>
               <li>• Full metrics + guidance, no payment</li>
             </ul>
           </div>
