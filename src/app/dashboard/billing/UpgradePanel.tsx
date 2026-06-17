@@ -66,7 +66,8 @@ export default function UpgradePanel({ email }: { email: string }) {
       </div>
       <p className="text-slate-500 text-sm mb-4 leading-relaxed">
         Pro is launching soon. Leave your email and we'll notify you when it's
-        ready — you'll be first to unlock formal certification and the Agent Passport.
+        ready — you'll be first to unlock the verified evaluation path and
+        reliability-tier qualification.
       </p>
       <div className="flex flex-col sm:flex-row gap-3">
         <input type="email" value={value} onChange={e => setValue(e.target.value)}
