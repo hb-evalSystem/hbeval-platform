@@ -6,7 +6,7 @@
 import Link from 'next/link'
 import { Shield, ArrowLeft } from 'lucide-react'
 
-export const metadata = { title: 'Terms of Service — HB-Eval OS' }
+export const metadata = { title: 'Terms of Service — HB-Eval' }
 
 const UPDATED = 'June 2026'
 
@@ -27,14 +27,14 @@ export default function TermsPage() {
         <div className="space-y-8 text-slate-300 text-sm leading-relaxed">
           <section>
             <h2 className="text-white font-semibold mb-2">1. Acceptance</h2>
-            <p>By creating an account or using HB-Eval OS (the "Service"), you agree to these
+            <p>By creating an account or using HB-Eval (the "Service"), you agree to these
             Terms. If you are using the Service for an organisation, you accept these Terms on
             its behalf. If you do not agree, do not use the Service.</p>
           </section>
 
           <section>
             <h2 className="text-white font-semibold mb-2">2. The Service</h2>
-            <p>HB-Eval OS evaluates the reliability of AI agents and issues diagnostic results
+            <p>HB-Eval evaluates the reliability of AI agents and issues diagnostic results
             and, where applicable, certification tiers. Results are provided for informational
             and engineering purposes. They are not a warranty of any agent's fitness for a
             particular purpose, and you remain responsible for how you deploy your agents.</p>
