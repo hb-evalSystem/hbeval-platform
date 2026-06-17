@@ -73,6 +73,7 @@ export async function callGatewaySigned(
   apiKey: string,                     // the agent's plaintext API key (from DB; not a secret cipher)
   secrets: AgentCipherSecrets,
   payload: unknown,
+  timeoutMs: number = 20000,          // explain is fast; batteries need more room
 ): Promise<unknown> {
   const aesKey = decryptUnderMaster(secrets.aesKeyEncrypted)
   const signingSecret = decryptUnderMaster(secrets.hmacSecretEncrypted)
@@ -90,8 +91,7 @@ export async function callGatewaySigned(
       'X-HBEval-Signature': signature,
     },
     body: JSON.stringify({ ciphertext: ciphertextHex }),
-    // The Gateway is fast for explain (no LLM call), but give it room.
-    signal: AbortSignal.timeout(20000),
+    signal: AbortSignal.timeout(timeoutMs),
   })
 
   if (!res.ok) {
