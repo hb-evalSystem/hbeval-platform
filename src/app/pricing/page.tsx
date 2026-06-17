@@ -22,8 +22,8 @@ const PLANS = [
       'Community support (GitHub)',
     ],
     missing: [
-      'Agent Passport (shows "Uncertified")',
-      'HB-Certified badge (Tier 1/2/3)',
+      'Agent Passport (shows "Tier: none")',
+      'HB Tier badge (Tier 1/2/3)',
       'Unlimited memory retrieval',
     ],
   },
@@ -31,7 +31,7 @@ const PLANS = [
     name: 'Pro',
     price: '$49',
     period: 'per month',
-    description: 'For teams running agents in production who need certified reliability.',
+    description: 'For teams running agents in production who need a verifiable reliability tier.',
     cta: 'Join waitlist',
     href: '#waitlist',
     highlight: true,
@@ -44,7 +44,7 @@ const PLANS = [
       'Unlimited EDM retrieval',
       '12-month evaluation history',
       'Agent Passport (signed & public)',
-      'HB-Certified badge (Tier 1/2)',
+      'HB Tier badge (Tier 1/2)',
       'Priority support (Slack/email)',
     ],
     missing: [],
@@ -53,14 +53,14 @@ const PLANS = [
     name: 'Enterprise',
     price: 'Custom',
     period: 'per month',
-    description: 'For organizations that need Tier 3 certification and custom SLAs.',
+    description: 'For organizations that need a Tier 3 reliability credential and custom SLAs.',
     cta: 'Contact us',
     href: 'mailto:gasimadam119@gmail.com',
     highlight: false,
     features: [
       'Unlimited evaluations',
       'All Pro features',
-      'HB-Certified badge (Tier 3)',
+      'HB Tier badge (Tier 3)',
       'Custom integration support',
       'Dedicated onboarding',
       'Audit log export',
@@ -95,7 +95,7 @@ export default function PricingPage() {
           </h1>
           <p className="text-slate-400 max-w-lg mx-auto">
             500 evaluations a month is enough to experience the system fully.
-            Agent Passport and certification unlock when you're ready for production.
+            Agent Passport and the Tier credential unlock when you're ready for production.
           </p>
         </div>
 
