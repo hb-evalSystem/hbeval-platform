@@ -118,7 +118,7 @@ function LiveProof() {
           <p className="text-slate-400 mb-8 max-w-2xl leading-relaxed">
             Our first real production run — unplanned, unstyled — showed exactly
             what the research paper describes. Three metrics at theoretical maximum.
-            One below Tier 1. No certification issued.
+            One below Tier 1. Not tier-qualified.
           </p>
 
           {/* Metrics grid */}
@@ -146,10 +146,10 @@ function LiveProof() {
 
           <div className="rounded-lg p-4 text-sm"
                style={{ background: 'rgba(239,68,68,0.08)', borderLeft: '3px solid #ef4444' }}>
-            <strong className="text-red-300">Result: No tier certification.</strong>
+            <strong className="text-red-300">Result: Not tier-qualified.</strong>
             <span className="text-slate-400 ml-2">
               Despite perfect quantitative scores, TI = 2.30 / 5.0 falls below the Tier 1 threshold of 3.0.
-              The agent's reasoning was not traceable enough for certified deployment.
+              The agent's reasoning was not traceable enough to qualify for autonomous deployment.
               This is the nominal-operational gap the paper describes — appearing unprompted in real data.
             </span>
           </div>
@@ -201,7 +201,7 @@ function MetricsSection() {
             Five Dimensions of Reliability
           </h2>
           <p className="text-slate-400 max-w-xl mx-auto">
-            Derived from IEC 61508 and ISO 26262 safety certification standards.
+            Interpreted against IEC 61508 and ISO 26262 safety-integrity levels (for rigor comparison only — HB-Eval issues no such certification).
             All five must be met simultaneously — the weakest link determines the tier.
           </p>
         </div>
@@ -241,7 +241,7 @@ function MetricsSection() {
             </div>
             <p className="text-sm text-slate-300 leading-relaxed">
               An agent scoring Tier 3 on four metrics but Tier 1 on IRS receives{' '}
-              <strong>Tier 1 certification only</strong>. High aggregate reliability cannot
+              <strong>Meets Tier 1 only</strong>. High aggregate reliability cannot
               conceal a specific deficit — the same principle used in aircraft and automotive
               safety standards.
             </p>
@@ -255,13 +255,71 @@ function MetricsSection() {
 // ─────────────────────────────────────────────────────────
 // How it works
 // ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+// Two evaluation paths
+// ─────────────────────────────────────────────────────────
+function EvaluationPaths() {
+  return (
+    <section id="paths" className="py-20 px-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-12">
+          <p className="section-label mb-3">Two Ways to Evaluate</p>
+          <h2 className="text-4xl font-bold text-white mb-4">
+            Run it yourself, or let the platform verify it
+          </h2>
+          <p className="text-slate-400 max-w-2xl mx-auto">
+            Both paths run the same fault-injection battery and score all five metrics
+            server-side. The difference is who executes the run.
+          </p>
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="card p-7">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="font-semibold text-white">Local battery</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full"
+                    style={{ background: 'rgba(16,185,129,0.12)', color: '#6ee7b7' }}>Free</span>
+            </div>
+            <p className="text-sm text-slate-400 mb-4 leading-relaxed">
+              The battery runs on your machine through the SDK. Your agent never leaves your
+              environment — only its responses are sent for scoring. You get a JSON report
+              locally. Results are marked <em>unverified</em>.
+            </p>
+            <ul className="text-sm text-slate-400 space-y-1.5">
+              <li>• <code className="text-slate-300">pip install hb-eval-sdk</code></li>
+              <li>• Call <code className="text-slate-300">evaluate_with_battery()</code></li>
+              <li>• Full metrics + guidance, no payment</li>
+            </ul>
+          </div>
+          <div className="card p-7" style={{ borderColor: 'rgba(139,92,246,0.3)' }}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="font-semibold text-white">Verified</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full"
+                    style={{ background: 'rgba(139,92,246,0.18)', color: '#c4b5fd' }}>Paid</span>
+            </div>
+            <p className="text-sm text-slate-400 mb-4 leading-relaxed">
+              The platform calls your agent endpoint end-to-end across the battery — you never
+              touch the middle, so the result cannot be tampered with. Marked <em>verified</em>,
+              and eligible for a reliability-tier qualification.
+            </p>
+            <ul className="text-sm text-slate-400 space-y-1.5">
+              <li>• Platform-run, tamper-proof</li>
+              <li>• SSRF-guarded, consent-required</li>
+              <li>• Meets Tier 1 / 2 / 3 qualification</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function HowItWorks() {
   const steps = [
     { n: '01', title: 'Install the SDK', body: 'pip install hb-eval-sdk — one command, zero infrastructure setup required.' },
-    { n: '02', title: 'Submit trajectories', body: 'Wrap your agent runs and call client.evaluate(payload). The SDK encrypts and sends to our Gateway.' },
-    { n: '03', title: 'Get your verdict', body: 'Receive a full metrics breakdown — PEI, IRS, FRR, TI, CSI — plus SAFE / UNSAFE verdict and the highest Tier achieved.' },
-    { n: '04', title: 'Monitor on the Dashboard', body: 'Track trends across all your agents over time. See the moment reliability starts drifting before it reaches production.' },
-    { n: '05', title: 'Earn your certificate', body: 'Once 100 runs consistently meet all five thresholds, issue a signed HB-Certified badge that any third party can verify.' },
+    { n: '02', title: 'Choose your path', body: 'Local battery (free): run the fault-injection battery on your own machine with the SDK — your agent never leaves your environment. Verified (paid): the platform calls your agent endpoint end-to-end for a tamper-proof result.' },
+    { n: '03', title: 'Run the fault-injection battery', body: 'Your agent is subjected to six fault types (tool failure, context corruption, stochastic, adversarial, cascade, combined) across six domains — far beyond a single happy-path run.' },
+    { n: '04', title: 'Get your verdict', body: 'Receive all five metrics — PEI, FRR, IRS, TI, CSI — the reliability gap (nominal vs under-fault), a SAFE / UNSAFE verdict, and the highest reliability tier met.' },
+    { n: '05', title: 'Monitor and qualify', body: 'Track trends across your agents. Once 100 runs consistently clear all five thresholds, your agent earns a Tier qualification (an internal performance classification, not an accredited certificate).' },
   ]
 
   return (
@@ -269,7 +327,7 @@ function HowItWorks() {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-16">
           <p className="section-label mb-3">Get Started</p>
-          <h2 className="text-4xl font-bold text-white">From zero to certified in five steps</h2>
+          <h2 className="text-4xl font-bold text-white">From zero to qualified in five steps</h2>
         </div>
         <div className="space-y-4">
           {steps.map(({ n, title, body }) => (
@@ -300,7 +358,7 @@ function PricingTeaser() {
           <h2 className="text-3xl font-bold text-white mb-4">Start evaluating today — free</h2>
           <p className="text-slate-400 mb-8 max-w-md mx-auto">
             500 evaluations per month, full SDK access, live dashboard. No credit card required.
-            Agent Passport and HB-Certified badges unlock with Pro.
+            Verified evaluation and reliability-tier qualification unlock with Pro.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/register" className="btn-primary text-base px-8 py-3">
@@ -370,7 +428,7 @@ function MemoryLayers() {
           <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed">
             Most systems remember everything and explain with confident guesses.
             HB-Eval does the opposite: it remembers only what proved reliable,
-            and it explains only what it can ground in a certified record.
+            and it explains only what it can ground in a qualified record.
           </p>
         </div>
 
@@ -389,7 +447,7 @@ function MemoryLayers() {
             </div>
             <p className="text-slate-400 text-sm leading-relaxed mb-4">
               Every run is judged before it is remembered. A trajectory is
-              consolidated into certified memory only when it clears
+              consolidated into qualified memory only when it clears
               <span className="text-emerald-300"> PEI ≥ 0.80 and TI ≥ 4.0</span> at
               the same time. Everything else is discarded as noise — so the store
               never fills with low-quality runs.
@@ -414,7 +472,7 @@ function MemoryLayers() {
             </div>
             <p className="text-slate-400 text-sm leading-relaxed mb-4">
               Ask <span style={{ color: '#c4b5fd' }}>why</span> a verdict stands, and
-              the system answers from the record — citing a specific certified
+              the system answers from the record — citing a specific qualified
               episode and its real metrics. When no precedent is similar enough,
               it does not invent a rationale: it honestly defers to human review.
             </p>
@@ -442,6 +500,7 @@ export default function LandingPage() {
         <Hero />
         <LiveProof />
         <MetricsSection />
+        <EvaluationPaths />
         <MemoryLayers />
         <HowItWorks />
         <PricingTeaser />
