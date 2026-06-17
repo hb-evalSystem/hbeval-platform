@@ -25,10 +25,11 @@ import { generateAgentSecrets } from '@/lib/crypto/secrets'
 
 export const runtime = 'nodejs'        // crypto module needs the Node runtime, not edge
 
-// Free accounts may create up to 3 agents. Paid plans are effectively
-// unlimited (a high safety ceiling guards against runaway abuse).
-const FREE_AGENT_CAP = 3
-const PAID_AGENT_CAP = 1000
+// Free accounts may create up to 2 agents; paid (Pro) up to 10. These are
+// account-level caps. The monthly EVALUATION limit is separate and lives on
+// the account (account_usage), shared across all of an account's agents.
+const FREE_AGENT_CAP = 2
+const PAID_AGENT_CAP = 10
 const AGENT_ID_RE = /^[a-zA-Z0-9\-_]+$/
 
 export async function POST(req: NextRequest) {
@@ -95,10 +96,9 @@ export async function POST(req: NextRequest) {
       aes_key_encrypted: secrets.aesKeyEncrypted,
       hmac_secret_encrypted: secrets.hmacSecretEncrypted,
       plan_type: 'free',
-      evaluation_limit: 500,
       is_active: true,
     })
-    .select('id, name, agent_id, api_key, plan_type, evaluation_limit')
+    .select('id, name, agent_id, api_key, plan_type')
     .single()
 
   if (insErr || !inserted) {
