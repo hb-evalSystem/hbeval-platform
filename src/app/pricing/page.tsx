@@ -13,17 +13,22 @@ const PLANS = [
     href: '/register',
     highlight: false,
     features: [
-      '500 evaluations / month',
-      'All 5 reliability metrics',
+      'Up to 2 agents',
+      '500 evaluations / month (shared across your agents)',
+      'All 5 reliability metrics (PEI, FRR, IRS, TI, CSI)',
+      'Fault-injection battery (6 fault types × 6 domains)',
+      'Local evaluation path (unverified results)',
+      'Full diagnostic guidance (why you failed + how to fix)',
+      'EDM memory — 3 retrievals',
       'Full SDK access (hb-eval-sdk)',
-      'Live Dashboard',
-      'EDM memory (3 retrievals)',
+      'Live dashboard',
       '30-day evaluation history',
       'Community support (GitHub)',
     ],
     missing: [
-      'Agent Passport (shows "Tier: none")',
-      'HB Tier badge (Tier 1/2/3)',
+      'Verified evaluation path (platform-run, tamper-proof)',
+      'Reliability-tier credential (Meets Tier 1/2/3)',
+      'HCI-EDM performance-grounded explanations',
       'Unlimited memory retrieval',
     ],
   },
@@ -31,39 +36,44 @@ const PLANS = [
     name: 'Pro',
     price: '$49',
     period: 'per month',
-    description: 'For teams running agents in production who need a verifiable reliability tier.',
+    description: 'For teams running agents in production who need verified, tier-qualified reliability.',
     cta: 'Join waitlist',
     href: '#waitlist',
     highlight: true,
     badge: 'Most Popular',
     features: [
-      '10,000 evaluations / month',
-      'All 5 reliability metrics',
+      'Up to 10 agents',
+      '5,000 evaluations / month (shared across your agents)',
+      'All 5 reliability metrics (PEI, FRR, IRS, TI, CSI)',
+      'Fault-injection battery (6 fault types × 6 domains)',
+      'Verified evaluation path — platform-run, tamper-proof',
+      'Reliability-tier credential — Meets Tier 1 / 2 / 3',
+      'HCI-EDM explanations (grounded in your stored episodes)',
+      'Unlimited EDM memory retrieval',
+      'Full diagnostic guidance',
       'Full SDK access',
-      'Live Dashboard',
-      'Unlimited EDM retrieval',
+      'Live dashboard',
       '12-month evaluation history',
-      'Agent Passport (signed & public)',
-      'HB Tier badge (Tier 1/2)',
-      'Priority support (Slack/email)',
+      'Priority support (email)',
     ],
     missing: [],
   },
   {
     name: 'Enterprise',
     price: 'Custom',
-    period: 'per month',
-    description: 'For organizations that need a Tier 3 reliability credential and custom SLAs.',
+    period: 'contact us',
+    description: 'For organizations that need custom limits, SLAs, and onboarding.',
     cta: 'Contact us',
     href: 'mailto:gasimadam119@gmail.com',
     highlight: false,
     features: [
-      'Unlimited evaluations',
+      'Custom agent limit',
+      'Custom monthly evaluation volume',
       'All Pro features',
-      'HB Tier badge (Tier 3)',
+      'Verified path + all reliability tiers (1 / 2 / 3)',
       'Custom integration support',
       'Dedicated onboarding',
-      'Audit log export',
+      'Audit-log export',
       'SLA guarantee',
     ],
     missing: [],
@@ -78,7 +88,7 @@ export default function PricingPage() {
            style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
         <Link href="/" className="flex items-center gap-2 font-semibold text-white">
           <Shield size={20} className="text-blue-500" />
-          HB-Eval <span className="text-blue-500">OS</span>
+          HB-Eval
         </Link>
         <div className="flex items-center gap-3">
           <Link href="/login"    className="btn-secondary text-sm px-4 py-2">Sign in</Link>
@@ -94,8 +104,9 @@ export default function PricingPage() {
             Start free. Scale when ready.
           </h1>
           <p className="text-slate-400 max-w-lg mx-auto">
-            500 evaluations a month is enough to experience the system fully.
-            Agent Passport and the Tier credential unlock when you're ready for production.
+            500 evaluations a month — shared across up to 2 agents — is enough to
+            experience the system fully. The verified path and the reliability-tier
+            credential unlock when you're ready for production.
           </p>
         </div>
 
