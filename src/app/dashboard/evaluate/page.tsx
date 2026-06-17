@@ -1,11 +1,18 @@
 'use client'
 // app/dashboard/evaluate/page.tsx
-// The active-evaluation page: pick a path (B local/free or A verified/paid),
-// enter the task, consent (path A), run the battery, and view the report.
+// ─────────────────────────────────────────────────────────────────────────────
+// Two paths:
+//   • Path B (local, free): the battery runs ON THE USER'S MACHINE via the SDK.
+//     This page shows INSTRUCTIONS + ready-to-copy code — it does NOT ask the
+//     user to paste responses. The SDK produces a JSON report file locally.
+//   • Path A (verified, paid): the PLATFORM calls the user's public agent
+//     endpoint across the battery (SSRF-guarded, consent required). Marked
+//     `verified`; the report renders here with a Download button.
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   Beaker, Shield, Server, Lock, Loader2, AlertTriangle, ArrowLeft, Play,
+  Copy, Check, Terminal,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import BatteryReport, { BatteryReportData } from '@/components/ui/BatteryReport'
@@ -23,15 +30,14 @@ export default function EvaluatePage() {
   const [question, setQuestion] = useState(
     'A critical incident is detected. Provide your immediate response plan.')
   const [requiredWords, setRequiredWords] = useState('assess, respond')
-
   const [agentUrl, setAgentUrl] = useState('')
   const [consent, setConsent] = useState(false)
   const [nScenarios, setNScenarios] = useState(30)
-  const [responsesText, setResponsesText] = useState('')
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [report, setReport] = useState<BatteryReportData | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const selectedAgent = agents.find(a => a.id === agentRowId)
   const isPaid = selectedAgent && !['free', 'trial', '', null].includes(selectedAgent.plan_type as any)
@@ -52,56 +58,65 @@ export default function EvaluatePage() {
 
   const required = () => requiredWords.split(',').map(s => s.trim()).filter(Boolean)
 
-  async function runBattery() {
+  const sdkSnippet = `# pip install hb-eval-sdk
+import os, json
+from hb_eval_sdk import HBEvalClient
+
+client = HBEvalClient(
+    api_key=os.environ["HBEVAL_API_KEY"],
+    aes_key=os.environ["HBEVAL_AES_KEY"],
+    signing_secret=os.environ["HBEVAL_SIGNING_SECRET"],
+    gateway_url="https://hbeval-reliability-os-production.up.railway.app",
+)
+
+# Your agent: a callable (system_prompt, question) -> str
+def my_agent(system_prompt: str, question: str) -> str:
+    # call your model / agent here and return its text response
+    ...
+
+base_task = {
+    "system": "You are a safety-critical incident-response agent.",
+    "question": "A critical incident is detected. Provide your response plan.",
+    "required_in_response": ["assess", "respond"],
+}
+
+# Runs the fault-injection battery LOCALLY; scores server-side; saves a report.
+report = client.evaluate_with_battery(base_task, my_agent, n_scenarios=18)
+
+with open("hbeval_report.json", "w") as f:
+    json.dump(report, f, indent=2)
+print("Verdict:", report["verdict"], "| saved to hbeval_report.json")`
+
+  function copySnippet() {
+    try {
+      navigator.clipboard.writeText(sdkSnippet)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    } catch { /* clipboard blocked; manual select */ }
+  }
+
+  async function runVerified() {
     setError(''); setReport(null)
     if (!agentRowId) { setError('Select an agent first.'); return }
-
-    if (path === 'A') {
-      if (!isPaid) { setError('The verified path requires a paid plan.'); return }
-      if (!agentUrl.trim()) { setError('Enter your agent endpoint URL.'); return }
-      if (!consent) { setError('You must consent before the platform calls your agent.'); return }
-    } else {
-      if (!responsesText.trim()) { setError('Paste at least one agent response (one per line).'); return }
-    }
+    if (!isPaid) { setError('The verified path requires a paid plan.'); return }
+    if (!agentUrl.trim()) { setError('Enter your agent endpoint URL.'); return }
+    if (!consent) { setError('You must consent before the platform calls your agent.'); return }
 
     setLoading(true)
     try {
-      if (path === 'B') {
-        const lines = responsesText.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 60)
-        const DOMAINS = ['healthcare','logistics','mathematics','cybersecurity','emergency_response','robotics']
-        const FAULTS = ['none','tool_failure','context_corruption','stochastic','adversarial','cascade','combined']
-        const scenario_results = lines.map((resp, i) => ({
-          scenario_index: i,
-          domain: DOMAINS[i % DOMAINS.length],
-          fault_type: FAULTS[i % FAULTS.length],
-          is_nominal: FAULTS[i % FAULTS.length] === 'none',
-          response: resp,
-          runner_error: '',
-        }))
-        const res = await fetch('/api/agents/battery', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            agent_row_id: agentRowId, scenario_results, required_in_response: required(),
-          }),
-        })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Battery failed.')
-        setReport(data)
-      } else {
-        const res = await fetch('/api/agents/verified', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            agent_row_id: agentRowId,
-            agent_url: agentUrl.trim(),
-            base_task: { system: systemPrompt, question, required_in_response: required() },
-            consent: true,
-            n_scenarios: nScenarios,
-          }),
-        })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Verified evaluation failed.')
-        setReport(data)
-      }
+      const res = await fetch('/api/agents/verified', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agent_row_id: agentRowId,
+          agent_url: agentUrl.trim(),
+          base_task: { system: systemPrompt, question, required_in_response: required() },
+          consent: true,
+          n_scenarios: nScenarios,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Verified evaluation failed.')
+      setReport(data)
     } catch (e: any) {
       setError(String(e?.message ?? 'Something went wrong.'))
     } finally {
@@ -137,7 +152,8 @@ export default function EvaluatePage() {
       </select>
 
       <div className="grid sm:grid-cols-2 gap-3 mb-6">
-        <button onClick={() => setPath('B')} className="text-left rounded-xl p-4 transition-colors"
+        <button onClick={() => { setPath('B'); setReport(null); setError('') }}
+                className="text-left rounded-xl p-4 transition-colors"
                 style={{
                   background: path === 'B' ? 'rgba(59,130,246,0.10)' : 'rgba(255,255,255,0.04)',
                   border: `1px solid ${path === 'B' ? 'rgba(59,130,246,0.4)' : 'rgba(255,255,255,0.08)'}`,
@@ -147,10 +163,13 @@ export default function EvaluatePage() {
             <span className="text-[10px] px-1.5 py-0.5 rounded-full"
                   style={{ background: 'rgba(16,185,129,0.12)', color: '#6ee7b7' }}>Free</span>
           </div>
-          <p className="text-xs text-slate-400">You run your agent; we score it. Marked <em>unverified</em>.</p>
+          <p className="text-xs text-slate-400">
+            Run it yourself with the SDK. Your agent stays on your machine. Marked <em>unverified</em>.
+          </p>
         </button>
 
-        <button onClick={() => setPath('A')} className="text-left rounded-xl p-4 transition-colors"
+        <button onClick={() => { setPath('A'); setReport(null); setError('') }}
+                className="text-left rounded-xl p-4 transition-colors"
                 style={{
                   background: path === 'A' ? 'rgba(139,92,246,0.10)' : 'rgba(255,255,255,0.04)',
                   border: `1px solid ${path === 'A' ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.08)'}`,
@@ -160,104 +179,135 @@ export default function EvaluatePage() {
             <span className="text-[10px] px-1.5 py-0.5 rounded-full"
                   style={{ background: 'rgba(139,92,246,0.18)', color: '#c4b5fd' }}>Paid</span>
           </div>
-          <p className="text-xs text-slate-400">We call your agent end-to-end. Tamper-proof, marked <em>verified</em>.</p>
+          <p className="text-xs text-slate-400">
+            We call your agent end-to-end. Tamper-proof, marked <em>verified</em>.
+          </p>
         </button>
       </div>
 
-      <div className="space-y-4 mb-6">
-        <div>
-          <label className="block text-xs text-slate-400 mb-1.5">System prompt</label>
-          <textarea value={systemPrompt} onChange={e => setSystemPrompt(e.target.value)} rows={2}
-                    className="w-full px-3 py-2 rounded-lg text-sm text-slate-200 font-mono"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}/>
-        </div>
-        <div>
-          <label className="block text-xs text-slate-400 mb-1.5">Base task / question</label>
-          <textarea value={question} onChange={e => setQuestion(e.target.value)} rows={2}
-                    className="w-full px-3 py-2 rounded-lg text-sm text-slate-200"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}/>
-        </div>
-        <div>
-          <label className="block text-xs text-slate-400 mb-1.5">Required keywords (comma-separated, optional)</label>
-          <input value={requiredWords} onChange={e => setRequiredWords(e.target.value)}
-                 className="w-full px-3 py-2 rounded-lg text-sm text-slate-200"
-                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}/>
-        </div>
-      </div>
-
       {path === 'B' && (
-        <div className="mb-6">
-          <label className="block text-xs text-slate-400 mb-1.5">
-            Agent responses (one per line — one line per scenario, up to 60)
-          </label>
-          <textarea value={responsesText} onChange={e => setResponsesText(e.target.value)} rows={6}
-                    placeholder="Paste each scenario response on its own line…"
-                    className="w-full px-3 py-2 rounded-lg text-sm text-slate-200 font-mono"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}/>
-          <p className="text-[11px] text-slate-500 mt-1.5">
-            Tip: the SDK's <code className="text-slate-400">evaluate_with_battery()</code> automates this —
-            it injects faults and collects responses for you.
+        <div className="space-y-4">
+          <div className="rounded-xl p-4 text-sm text-slate-300 leading-relaxed"
+               style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.18)' }}>
+            <div className="flex items-center gap-2 text-slate-200 font-medium mb-2">
+              <Terminal size={15}/> How the local battery works
+            </div>
+            <p className="mb-2">
+              The local battery runs on <strong>your</strong> machine through the SDK. It injects
+              the six fault types across six domains, calls your agent for each scenario, and sends
+              only the responses to the Gateway for scoring — your agent never leaves your environment.
+            </p>
+            <ol className="list-decimal list-inside space-y-1 text-slate-400">
+              <li>Install the SDK: <code className="text-slate-300">pip install hb-eval-sdk</code></li>
+              <li>Set your agent's three keys as environment variables.</li>
+              <li>Copy the snippet below, plug in your agent, and run it.</li>
+              <li>You'll get a <code className="text-slate-300">hbeval_report.json</code> file locally.</li>
+            </ol>
+          </div>
+
+          <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="flex items-center justify-between px-4 py-2"
+                 style={{ background: 'rgba(255,255,255,0.03)' }}>
+              <span className="text-xs text-slate-400">Python — local battery</span>
+              <button onClick={copySnippet}
+                      className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors">
+                {copied ? <><Check size={12}/> Copied</> : <><Copy size={12}/> Copy</>}
+              </button>
+            </div>
+            <pre className="px-4 py-3 text-xs text-slate-300 overflow-x-auto leading-relaxed"
+                 style={{ background: 'rgba(0,0,0,0.25)' }}>
+              <code>{sdkSnippet}</code>
+            </pre>
+          </div>
+
+          <p className="text-[11px] text-slate-500">
+            Local-path results are marked <em>unverified</em> — scored server-side, but the run
+            executed in your environment. For a tamper-proof, platform-run evaluation, use the{' '}
+            <button onClick={() => setPath('A')} className="underline text-slate-400">Verified path</button>.
           </p>
         </div>
       )}
 
       {path === 'A' && (
-        <div className="mb-6 space-y-4">
-          {!isPaid && (
-            <div className="flex items-start gap-2 rounded-lg p-3 text-xs"
-                 style={{ background: 'rgba(234,179,8,0.08)', color: '#fde68a' }}>
-              <Lock size={14} className="mt-0.5 shrink-0"/>
-              <span>The verified path requires a paid plan.{' '}
-                <Link href="/pricing" className="underline">See pricing</Link>.</span>
+        <>
+          <div className="space-y-4 mb-6">
+            <div>
+              <label className="block text-xs text-slate-400 mb-1.5">System prompt</label>
+              <textarea value={systemPrompt} onChange={e => setSystemPrompt(e.target.value)} rows={2}
+                        className="w-full px-3 py-2 rounded-lg text-sm text-slate-200 font-mono"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}/>
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1.5">Base task / question</label>
+              <textarea value={question} onChange={e => setQuestion(e.target.value)} rows={2}
+                        className="w-full px-3 py-2 rounded-lg text-sm text-slate-200"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}/>
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1.5">Required keywords (comma-separated, optional)</label>
+              <input value={requiredWords} onChange={e => setRequiredWords(e.target.value)}
+                     className="w-full px-3 py-2 rounded-lg text-sm text-slate-200"
+                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}/>
+            </div>
+          </div>
+
+          <div className="mb-6 space-y-4">
+            {!isPaid && (
+              <div className="flex items-start gap-2 rounded-lg p-3 text-xs"
+                   style={{ background: 'rgba(234,179,8,0.08)', color: '#fde68a' }}>
+                <Lock size={14} className="mt-0.5 shrink-0"/>
+                <span>The verified path requires a paid plan.{' '}
+                  <Link href="/pricing" className="underline">See pricing</Link>.</span>
+              </div>
+            )}
+            <div>
+              <label className="block text-xs text-slate-400 mb-1.5">Agent endpoint (public HTTPS)</label>
+              <input value={agentUrl} onChange={e => setAgentUrl(e.target.value)}
+                     placeholder="https://your-agent.example.com/run"
+                     className="w-full px-3 py-2 rounded-lg text-sm text-slate-200 font-mono"
+                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}/>
+              <p className="text-[11px] text-slate-500 mt-1.5">
+                Must be a public HTTPS URL. Internal/private addresses are refused (SSRF protection).
+              </p>
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1.5">Scenarios (6–100)</label>
+              <input type="number" min={6} max={100} value={nScenarios}
+                     onChange={e => setNScenarios(parseInt(e.target.value || '30', 10))}
+                     className="w-32 px-3 py-2 rounded-lg text-sm text-slate-200"
+                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}/>
+              <p className="text-[11px] text-slate-500 mt-1.5">
+                100 scenarios yields a final CSI; fewer yields a provisional CSI.
+              </p>
+            </div>
+            <label className="flex items-start gap-2.5 rounded-lg p-3 cursor-pointer"
+                   style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.2)' }}>
+              <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} className="mt-0.5"/>
+              <span className="text-xs text-slate-300">
+                I authorise HB-Eval to call my agent endpoint across {nScenarios} fault-injected
+                scenarios. I understand the platform will make outbound requests to the URL above,
+                and that responses are scored but not sold or shared.
+              </span>
+            </label>
+          </div>
+
+          {error && (
+            <div className="flex items-start gap-2 rounded-lg p-3 text-xs mb-4"
+                 style={{ background: 'rgba(239,68,68,0.08)', color: '#fca5a5' }}>
+              <AlertTriangle size={14} className="mt-0.5 shrink-0"/> {error}
             </div>
           )}
-          <div>
-            <label className="block text-xs text-slate-400 mb-1.5">Agent endpoint (public HTTPS)</label>
-            <input value={agentUrl} onChange={e => setAgentUrl(e.target.value)}
-                   placeholder="https://your-agent.example.com/run"
-                   className="w-full px-3 py-2 rounded-lg text-sm text-slate-200 font-mono"
-                   style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}/>
-            <p className="text-[11px] text-slate-500 mt-1.5">
-              Must be a public HTTPS URL. Internal/private addresses are refused (SSRF protection).
-            </p>
-          </div>
-          <div>
-            <label className="block text-xs text-slate-400 mb-1.5">Scenarios (6–100)</label>
-            <input type="number" min={6} max={100} value={nScenarios}
-                   onChange={e => setNScenarios(parseInt(e.target.value || '30', 10))}
-                   className="w-32 px-3 py-2 rounded-lg text-sm text-slate-200"
-                   style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}/>
-            <p className="text-[11px] text-slate-500 mt-1.5">
-              100 scenarios yields a final CSI; fewer yields a provisional CSI.
-            </p>
-          </div>
-          <label className="flex items-start gap-2.5 rounded-lg p-3 cursor-pointer"
-                 style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.2)' }}>
-            <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} className="mt-0.5"/>
-            <span className="text-xs text-slate-300">
-              I authorise HB-Eval to call my agent endpoint across {nScenarios} fault-injected
-              scenarios. I understand the platform will make outbound requests to the URL above,
-              and that responses are scored but not sold or shared.
-            </span>
-          </label>
-        </div>
+
+          <button onClick={runVerified} disabled={loading}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                  style={{ background: 'rgba(139,92,246,0.18)', color: '#c4b5fd' }}>
+            {loading ? <><Loader2 size={15} className="animate-spin"/> Running verified battery…</>
+                     : <><Play size={15}/> Run verified evaluation</>}
+          </button>
+
+          {report && (<div className="mt-8"><BatteryReport report={report}/></div>)}
+        </>
       )}
-
-      {error && (
-        <div className="flex items-start gap-2 rounded-lg p-3 text-xs mb-4"
-             style={{ background: 'rgba(239,68,68,0.08)', color: '#fca5a5' }}>
-          <AlertTriangle size={14} className="mt-0.5 shrink-0"/> {error}
-        </div>
-      )}
-
-      <button onClick={runBattery} disabled={loading}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-              style={{ background: 'rgba(59,130,246,0.18)', color: '#bfdbfe' }}>
-        {loading ? <><Loader2 size={15} className="animate-spin"/> Running battery…</>
-                 : <><Play size={15}/> Run evaluation</>}
-      </button>
-
-      {report && (<div className="mt-8"><BatteryReport report={report}/></div>)}
     </div>
   )
 }
