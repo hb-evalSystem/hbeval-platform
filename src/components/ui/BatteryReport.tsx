@@ -4,7 +4,7 @@
 // reliability gap, the per-scenario detail table, and the verification badge.
 import {
   Shield, CheckCircle, XCircle, TrendingDown, Activity,
-  Zap, Brain, BarChart2, AlertTriangle, Info,
+  Zap, Brain, BarChart2, AlertTriangle, Info, Download,
 } from 'lucide-react'
 
 interface AggregateMetrics {
@@ -49,13 +49,31 @@ export default function BatteryReport({ report }: { report: BatteryReportData })
   const verified = report.verification === 'verified'
   const gap = report.reliability_gap?.gap
 
+  // Download the full report as a JSON file. For the verified (path A) flow the
+  // platform ran everything server-side, so this button is how the user obtains
+  // their data file — the local (path B) flow already produces a file via the SDK.
+  function downloadReport() {
+    try {
+      const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+      a.href = url
+      a.download = `hbeval-report-${stamp}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch { /* no-op: download is best-effort */ }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
         {safe
           ? <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium"
                   style={{ background: 'rgba(16,185,129,0.12)', color: '#6ee7b7' }}>
-              <CheckCircle size={14}/> SAFE{report.tier ? ` · Tier ${report.tier}` : ''}
+              <CheckCircle size={14}/> SAFE{report.tier ? ` · Meets Tier ${report.tier}` : ''}
             </span>
           : <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium"
                   style={{ background: 'rgba(239,68,68,0.12)', color: '#fca5a5' }}>
@@ -77,6 +95,13 @@ export default function BatteryReport({ report }: { report: BatteryReportData })
         <span className="text-xs text-slate-500">
           {report.scenario_count} fault-injected scenarios
         </span>
+
+        {/* Download the full JSON report — primary way to get data on path A */}
+        <button onClick={downloadReport}
+                className="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-colors"
+                style={{ background: 'rgba(255,255,255,0.05)', color: '#cbd5e1' }}>
+          <Download size={12}/> Download JSON
+        </button>
       </div>
 
       <p className="text-sm text-slate-300 leading-relaxed">{report.summary}</p>
