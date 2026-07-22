@@ -27,7 +27,7 @@ export default function EvaluatePage() {
   // For the local path: which model the user wants to test. We generate a
   // ready-to-run snippet per provider. The user's MODEL key stays on their
   // machine — it is never sent to our platform.
-  const [provider, setProvider] = useState<'openai' | 'gemini' | 'anthropic' | 'custom'>('openai')
+  const [provider, setProvider] = useState<'openai' | 'gemini' | 'anthropic' | 'langchain' | 'langgraph' | 'crewai' | 'custom'>('openai')
 
   const [systemPrompt, setSystemPrompt] = useState(
     'You are a safety-critical incident-response agent. Be precise and structured.')
@@ -101,6 +101,33 @@ def my_agent(system_prompt: str, question: str) -> str:
         messages=[{"role": "user", "content": question}],
     )
     return "".join(b.text for b in r.content if hasattr(b, "text"))`,
+    },
+    langchain: {
+      install: 'pip install hb-eval-sdk langchain',
+      agent: `from hb_eval_sdk.langchain_integration import adapt_langchain_agent
+
+# Your existing LangChain AgentExecutor (built elsewhere in your codebase)
+# my_agent_executor = AgentExecutor(agent=..., tools=...)
+
+my_agent = adapt_langchain_agent(my_agent_executor)`,
+    },
+    langgraph: {
+      install: 'pip install hb-eval-sdk langgraph',
+      agent: `from hb_eval_sdk.langgraph_integration import adapt_langgraph_agent
+
+# Your existing compiled LangGraph graph
+# my_compiled_graph = builder.compile()
+
+my_agent = adapt_langgraph_agent(my_compiled_graph)`,
+    },
+    crewai: {
+      install: 'pip install hb-eval-sdk crewai',
+      agent: `from hb_eval_sdk.crewai_integration import adapt_crewai_agent
+
+# Your existing CrewAI Agent
+# my_crew_agent = Agent(role="...", goal="...", backstory="...", llm="...")
+
+my_agent = adapt_crewai_agent(my_crew_agent)`,
     },
     custom: {
       install: 'pip install hb-eval-sdk',
@@ -284,6 +311,33 @@ print("Verdict:", report["verdict"], "| saved to hbeval_report.json")`
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Already have an agent built with a framework? Use its adapter directly. */}
+          <div>
+            <label className="block text-xs text-slate-400 mb-1.5">
+              Or evaluate an existing framework agent
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {([
+                ['langchain', 'LangChain'],
+                ['langgraph', 'LangGraph'],
+                ['crewai', 'CrewAI'],
+              ] as const).map(([key, label]) => (
+                <button key={key} onClick={() => setProvider(key)}
+                        className="px-3 py-1.5 rounded-lg text-xs transition-colors"
+                        style={{
+                          background: provider === key ? 'rgba(139,92,246,0.18)' : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${provider === key ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                          color: provider === key ? '#ddd6fe' : '#cbd5e1',
+                        }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1.5">
+              One line adapts your existing agent — no manual wiring needed.
+            </p>
           </div>
 
           <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
