@@ -5,7 +5,7 @@
 // the data is already in the HTML when it reaches the browser.
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Bot, Plus, TrendingUp, Activity, CheckCircle, XCircle, ArrowRight } from 'lucide-react'
+import { Bot, Plus, TrendingUp, Activity, CheckCircle, XCircle, ArrowRight, Radio } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface Agent {
@@ -68,6 +68,20 @@ export default async function DashboardPage() {
     evaluations = (data || []).map(e => ({ ...e, agent_id: e.project_id }))
   }
 
+  // Runtime-monitoring session count, used only to label the link below.
+  // Read defensively: this is a nice-to-have indicator, and a failure here
+  // (for example if migration 09 has not been applied on this environment)
+  // must not prevent the dashboard from rendering.
+  let monitoringCount = 0
+  try {
+    const { count } = await supabase
+      .from('monitoring_sessions')
+      .select('session_id', { count: 'exact', head: true })
+    monitoringCount = count ?? 0
+  } catch {
+    monitoringCount = 0
+  }
+
   // Derived statistics
   const totalEvals    = agents.reduce((s, a) => s + a.evaluations_this_month, 0)
   const totalLimit    = agents.reduce((s, a) => s + a.evaluation_limit, 0)
@@ -91,9 +105,28 @@ export default async function DashboardPage() {
               : `You have ${agents.length} agent${agents.length > 1 ? 's' : ''} running.`}
           </p>
         </div>
-        <Link href="/dashboard/agents/new" className="btn-primary text-sm">
-          <Plus size={15} /> New Agent
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* Runtime monitoring lives on its own page because it answers a
+              different question from the evaluations below: not "was this run
+              reliable?" but "is the agent still reliable while it runs?" */}
+          <Link
+            href="/dashboard/monitoring"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-slate-300 transition-colors hover:text-white"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <Radio size={14} className="text-emerald-400" />
+            Monitoring
+            {monitoringCount > 0 && (
+              <span className="ml-1 text-xs px-1.5 py-0.5 rounded"
+                    style={{ background: 'rgba(52,211,153,0.15)', color: '#6ee7b7' }}>
+                {monitoringCount}
+              </span>
+            )}
+          </Link>
+          <Link href="/dashboard/agents/new" className="btn-primary text-sm">
+            <Plus size={15} /> New Agent
+          </Link>
+        </div>
       </div>
 
       {/* Stats row */}
@@ -159,6 +192,10 @@ export default async function DashboardPage() {
             <h2 className="font-semibold text-white flex items-center gap-2">
               <Activity size={16} className="text-emerald-400" /> Recent Evaluations
             </h2>
+            <Link href="/dashboard/monitoring"
+                  className="text-xs text-slate-500 hover:text-slate-300 flex items-center gap-1">
+              Live monitoring <ArrowRight size={12} />
+            </Link>
           </div>
 
           {evaluations.length === 0 ? (
@@ -166,7 +203,7 @@ export default async function DashboardPage() {
               <TrendingUp size={28} className="text-slate-600 mx-auto mb-3" />
               <p className="text-slate-500 text-sm">No evaluations yet.</p>
               <p className="text-slate-600 text-xs mt-1">
-                Call <code className="code-inline">client.evaluate()</code> to see results here.
+                Call <code className="code-inline">client.evaluate_with_battery()</code> to see results here.
               </p>
             </div>
           ) : (
@@ -189,8 +226,15 @@ export default async function DashboardPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3 text-xs font-mono">
-                      <span className="text-slate-500">PEI {(ev.pei_score || 0).toFixed(2)}</span>
-                      <span className="text-slate-500">IRS {(ev.irs_score || 0).toFixed(2)}</span>
+                      {/* "—" for a metric that was undefined for this run (IRS with
+                          no faults injected). Rendering it as 0.00 would read as a
+                          failing score on a dimension that was never measured. */}
+                      <span className="text-slate-500">
+                        PEI {ev.pei_score === null || ev.pei_score === undefined ? '—' : ev.pei_score.toFixed(2)}
+                      </span>
+                      <span className="text-slate-500">
+                        IRS {ev.irs_score === null || ev.irs_score === undefined ? '—' : ev.irs_score.toFixed(2)}
+                      </span>
                       <span className={ev.verdict === 'SAFE' ? 'badge-safe' : 'badge-unsafe'}>
                         {ev.verdict}
                       </span>
