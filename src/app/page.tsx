@@ -16,7 +16,7 @@ function Navbar() {
                   borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
       <Link href="/" className="flex items-center gap-2 font-semibold text-white text-lg">
         <Shield size={22} className="text-blue-500" />
-        <span>HB-Eval <span className="text-blue-500">OS</span></span>
+        <span>HB-Eval</span>
       </Link>
 
       <div className="hidden md:flex items-center gap-8 text-sm text-slate-400">
@@ -91,7 +91,7 @@ function Hero() {
                       color: '#93c5fd' }}>
           pip install hb-eval-sdk
           <span className="text-slate-500">·</span>
-          <span className="text-slate-400 font-sans font-normal">v2.1.0 on PyPI</span>
+          <span className="text-slate-400 font-sans font-normal">v2.2.0 on PyPI</span>
         </div>
       </div>
     </section>
@@ -314,6 +314,53 @@ function EvaluationPaths() {
   )
 }
 
+function FrameworkIntegrations() {
+  const frameworks = [
+    { name: 'LangChain', color: '#f97316', bg: 'rgba(249,115,22,0.12)',
+      line: 'adapt_langchain_agent(agent_executor)' },
+    { name: 'LangGraph', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',
+      line: 'adapt_langgraph_agent(compiled_graph)' },
+    { name: 'CrewAI', color: '#10b981', bg: 'rgba(16,185,129,0.12)',
+      line: 'adapt_crewai_agent(crew_agent)' },
+  ]
+  return (
+    <section id="integrations" className="py-20 px-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-12">
+          <p className="section-label mb-3">Works With Your Stack</p>
+          <h2 className="text-4xl font-bold text-white mb-4">
+            Already built an agent? Evaluate it in one line
+          </h2>
+          <p className="text-slate-400 max-w-2xl mx-auto">
+            Native adapters for the frameworks you already use. No manual wiring &mdash;
+            wrap your existing agent and run the full fault-injection battery on it.
+          </p>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {frameworks.map((fw) => (
+            <div key={fw.name} className="card p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: fw.color }} />
+                <span className="font-semibold text-white">{fw.name}</span>
+              </div>
+              <div className="rounded-lg p-3 font-mono text-[11px] leading-relaxed overflow-x-auto"
+                   style={{ background: fw.bg, color: '#e2e8f0' }}>
+                <span className="text-slate-500">my_agent = </span>{fw.line}
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-center text-sm text-slate-500 mt-8">
+          Any agent, any source &mdash; or just an OpenAI / Gemini / Anthropic key.{' '}
+          <a href="/dashboard/evaluate" className="text-blue-400 hover:text-blue-300">
+            Start evaluating &rarr;
+          </a>
+        </p>
+      </div>
+    </section>
+  )
+}
+
 function HowItWorks() {
   const steps = [
     { n: '01', title: 'Install the SDK', body: 'pip install hb-eval-sdk — one command, zero infrastructure setup required.' },
@@ -384,8 +431,8 @@ function Footer() {
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-2 text-white font-semibold">
           <Shield size={18} className="text-blue-500" />
-          HB-Eval <span className="text-blue-500">OS</span>
-          <span className="text-slate-600 font-normal text-sm ml-2">v2.1.0</span>
+          HB-Eval
+          <span className="text-slate-600 font-normal text-sm ml-2">v2.2.0</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-6 text-sm text-slate-500">
@@ -502,6 +549,7 @@ export default function LandingPage() {
         <LiveProof />
         <MetricsSection />
         <EvaluationPaths />
+        <FrameworkIntegrations />
         <MemoryLayers />
         <HowItWorks />
         <PricingTeaser />
