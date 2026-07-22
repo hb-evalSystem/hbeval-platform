@@ -63,7 +63,7 @@ function Hero() {
           The Reliability{' '}
           <span style={{ background: 'linear-gradient(135deg,#3b82f6,#7c3aed)',
                          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Operating System
+            Layer
           </span>
           <br />for Agentic AI
         </h1>
@@ -91,7 +91,7 @@ function Hero() {
                       color: '#93c5fd' }}>
           pip install hb-eval-sdk
           <span className="text-slate-500">·</span>
-          <span className="text-slate-400 font-sans font-normal">v2.2.0 on PyPI</span>
+          <span className="text-slate-400 font-sans font-normal">v2.3.0 on PyPI</span>
         </div>
       </div>
     </section>
@@ -432,7 +432,7 @@ function Footer() {
         <div className="flex items-center gap-2 text-white font-semibold">
           <Shield size={18} className="text-blue-500" />
           HB-Eval
-          <span className="text-slate-600 font-normal text-sm ml-2">v2.2.0</span>
+          <span className="text-slate-600 font-normal text-sm ml-2">v2.3.0</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-6 text-sm text-slate-500">
@@ -445,7 +445,7 @@ function Footer() {
           <Link href="/pricing" className="hover:text-slate-300 transition-colors">Pricing</Link>
           <Link href="/legal/terms" className="hover:text-slate-300 transition-colors">Terms</Link>
           <Link href="/legal/privacy" className="hover:text-slate-300 transition-colors">Privacy</Link>
-          <a href="mailto:gasimadam119@gmail.com" className="hover:text-slate-300 transition-colors">Contact</a>
+          <a href="mailto:abuelgasim.hbeval@outlook.com" className="hover:text-slate-300 transition-colors">Contact</a>
         </div>
 
         <div className="text-xs text-slate-600">
