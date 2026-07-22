@@ -3,20 +3,50 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'HB-Eval — Reliability Evaluation Platform for Agentic AI',
+  // Positioning note: this describes what HB-Eval measures and how, rather
+  // than asserting priority over other tools. Observability platforms answer
+  // "what happened?"; HB-Eval answers "how much does this degrade under
+  // injected faults, and does it qualify to operate at a given tier?" The
+  // claim we can defend — and that differentiates us — is the methodology:
+  // systematic fault injection, five behavioural metrics, published and
+  // reproducible. An unqualified "first platform" claim invites a rebuttal
+  // we cannot win and undermines the scientific rigour that is the project's
+  // actual competitive advantage.
   description:
-    'The first reliability evaluation platform for agentic AI. ' +
-    'Measure and monitor your AI agents with five battle-tested metrics ' +
-    'under fault-injection stress testing.',
+    'Operational reliability measurement for agentic AI. Five behavioural ' +
+    'metrics under systematic fault injection, with a published, ' +
+    'reproducible methodology — measuring the gap between benchmark ' +
+    'performance and reliability under failure.',
+  keywords: [
+    'agentic AI',
+    'AI agent reliability',
+    'operational reliability',
+    'fault injection',
+    'agent evaluation',
+    'AI safety',
+    'LangChain',
+    'LangGraph',
+    'CrewAI',
+  ],
+  authors: [{ name: 'Abuelgasim Mohamed Ibrahim Adam' }],
   metadataBase: new URL('https://hbeval.com'),
   openGraph: {
-    title: 'HB-Eval',
-    description: 'Reliability evaluation for agentic AI systems.',
+    title: 'HB-Eval — Reliability Evaluation for Agentic AI',
+    description:
+      'Measure how reliably your agent behaves under injected faults — ' +
+      'five metrics, published methodology, open source.',
     url: 'https://hbeval.com',
     siteName: 'HB-Eval',
     locale: 'en_US',
     type: 'website',
   },
-  twitter: { card: 'summary_large_image', title: 'HB-Eval' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'HB-Eval — Reliability Evaluation for Agentic AI',
+    description:
+      'Measure how reliably your agent behaves under injected faults — ' +
+      'five metrics, published methodology, open source.',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
