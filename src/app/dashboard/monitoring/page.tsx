@@ -173,9 +173,11 @@ export default function MonitoringPage() {
       // RLS scopes both queries to the signed-in user. See the note at the top.
       const { data: sessionRows, error: sErr } = await supabase
         .from('monitoring_sessions')
-        .select('session_id, agent_id, started_at, ended_at, duration_seconds, ' +
-                'step_count, breach_count, halted, pei_live, frr_live, irs_live, ' +
-                'ti_live, csi_live, created_at')
+        // NOTE: this select must stay a SINGLE string literal. supabase-js
+        // parses the select text at the type level, and splitting it across
+        // concatenated strings defeats that parser — the rows then come back
+        // typed as GenericStringError[] and the build fails.
+        .select('session_id, agent_id, started_at, ended_at, duration_seconds, step_count, breach_count, halted, pei_live, frr_live, irs_live, ti_live, csi_live, created_at')
         .order('created_at', { ascending: false })
         .limit(SESSION_LIMIT)
 
