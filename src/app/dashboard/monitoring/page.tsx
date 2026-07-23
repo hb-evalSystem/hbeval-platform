@@ -26,7 +26,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import {
   Activity, AlertTriangle, ArrowLeft, ArrowUpRight, ArrowDownRight, Minus,
-  Loader2, RefreshCw, ShieldAlert, Terminal, Copy, Check, Radio,
+  Loader2, RefreshCw, ShieldAlert, Terminal, Copy, Check, Radio, OctagonX,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -46,6 +46,9 @@ interface MonitoringSession {
   ti_live: number | null
   csi_live: number | null
   created_at: string
+  status: string
+  last_event_at: string | null
+  halt_reason: string | null
 }
 
 interface BreachEvent {
@@ -69,8 +72,13 @@ const METRICS: { key: MetricKey; column: keyof MonitoringSession; label: string;
   { key: 'csi', column: 'csi_live', label: 'CSI', full: 'Consistency Stability', max: 1 },
 ]
 
+// Polling remains as a fallback even when the realtime subscription is
+// working: if the socket drops silently the dashboard must not freeze.
 const POLL_MS = 20_000
 const SESSION_LIMIT = 100
+// A session claiming to be active but silent for longer than this had its
+// process die without closing. Showing it as live would be a lie.
+const STALE_AFTER_MS = 45_000
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(value: number | null | undefined, digits = 2): string {
@@ -138,6 +146,15 @@ function Sparkline({ values, max, color }: { values: (number | null)[]; max: num
   )
 }
 
+// "active" in the database only means the session never closed. A crashed
+// process leaves that flag set forever, so liveness is judged by recency of
+// the last batch, not by the flag alone.
+function isLive(s: MonitoringSession): boolean {
+  if (s.status !== 'active') return false
+  if (!s.last_event_at) return false
+  return Date.now() - new Date(s.last_event_at).getTime() < STALE_AFTER_MS
+}
+
 function DirectionBadge({ direction }: { direction: Direction }) {
   const map: Record<Direction, { icon: React.ReactNode; text: string; color: string }> = {
     improving: { icon: <ArrowUpRight size={12} />, text: 'improving', color: '#34d399' },
@@ -164,6 +181,7 @@ export default function MonitoringPage() {
   const [live, setLive] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [copied, setCopied] = useState(false)
+  const [realtime, setRealtime] = useState(false)
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
@@ -177,7 +195,7 @@ export default function MonitoringPage() {
         // parses the select text at the type level, and splitting it across
         // concatenated strings defeats that parser — the rows then come back
         // typed as GenericStringError[] and the build fails.
-        .select('session_id, agent_id, started_at, ended_at, duration_seconds, step_count, breach_count, halted, pei_live, frr_live, irs_live, ti_live, csi_live, created_at')
+        .select('session_id, agent_id, started_at, ended_at, duration_seconds, step_count, breach_count, halted, pei_live, frr_live, irs_live, ti_live, csi_live, created_at, status, last_event_at, halt_reason')
         .order('created_at', { ascending: false })
         .limit(SESSION_LIMIT)
 
@@ -225,6 +243,32 @@ export default function MonitoringPage() {
     return () => clearInterval(id)
   }, [live, load])
 
+  // Realtime subscription: this is what makes the page update the instant a
+  // batch lands, instead of up to POLL_MS later. Row level security applies to
+  // realtime too, so a subscriber still receives only their own sessions.
+  //
+  // Polling above is deliberately NOT disabled when this connects. A websocket
+  // can drop without an error surfacing, and a monitoring dashboard that has
+  // quietly stopped updating is worse than one that updates slowly.
+  useEffect(() => {
+    if (!live) return
+    const supabase = createClient()
+    const channel = supabase
+      .channel('hbeval-monitoring-live')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'monitoring_sessions' },
+        () => { setRealtime(true); load(true) },
+      )
+      .subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') setRealtime(true)
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          setRealtime(false)
+        }
+      })
+    return () => { supabase.removeChannel(channel) }
+  }, [live, load])
+
   const agentIds = useMemo(
     () => Array.from(new Set(sessions.map((s) => s.agent_id))).sort(),
     [sessions],
@@ -246,6 +290,8 @@ export default function MonitoringPage() {
   }), [filtered])
 
   const latest = filtered[0]
+  const liveSessions = useMemo(() => filtered.filter(isLive), [filtered])
+  const haltedSessions = useMemo(() => filtered.filter((s) => s.halted), [filtered])
 
   const filteredEvents = useMemo(() => {
     if (selectedAgent === 'all') return events
@@ -308,7 +354,7 @@ with client.monitor(agent_id="my-agent") as m:
               aria-pressed={live}
             >
               <Radio size={12} className={live ? 'animate-pulse' : ''} />
-              {live ? 'Live' : 'Paused'}
+              {live ? (realtime ? 'Live' : 'Live (polling)') : 'Paused'}
             </button>
             <button
               onClick={() => load(true)}
@@ -409,6 +455,55 @@ with client.monitor(agent_id="my-agent") as m:
               )}
             </div>
 
+            {/* Running right now — the whole point of streaming. A session
+                appears here from its first step, while the agent is still
+                working, rather than only after it finishes. */}
+            {liveSessions.length > 0 && (
+              <div className="card p-5 mb-6" style={{ borderColor: 'rgba(52,211,153,0.3)' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                          style={{ background: '#34d399' }} />
+                    <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: '#34d399' }} />
+                  </span>
+                  <h2 className="text-sm font-semibold text-white">
+                    Running now
+                    <span className="text-slate-500 font-normal"> · {liveSessions.length} session{liveSessions.length > 1 ? 's' : ''}</span>
+                  </h2>
+                </div>
+                <div className="space-y-3">
+                  {liveSessions.map((s) => (
+                    <div key={s.session_id}
+                         className="flex flex-wrap items-center justify-between gap-3 rounded-lg px-3 py-2.5"
+                         style={{ background: 'rgba(52,211,153,0.06)' }}>
+                      <div className="min-w-0">
+                        <p className="text-sm text-white truncate max-w-[220px]" title={s.agent_id}>{s.agent_id}</p>
+                        <p className="text-[11px] text-slate-500">
+                          {s.step_count} steps · last update {timeAgo(s.last_event_at)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs font-mono">
+                        {METRICS.map((mm) => (
+                          <span key={mm.key} className="text-slate-400">
+                            {mm.label}{' '}
+                            <span className="text-slate-200">
+                              {fmt(s[mm.column] as number | null, mm.max === 5 ? 1 : 2)}
+                            </span>
+                          </span>
+                        ))}
+                        {s.breach_count > 0 && (
+                          <span className="px-1.5 py-0.5 rounded"
+                                style={{ background: 'rgba(251,191,36,0.15)', color: '#fbbf24' }}>
+                            {s.breach_count} breach{s.breach_count > 1 ? 'es' : ''}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Summary */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               {[
@@ -462,6 +557,42 @@ with client.monitor(agent_id="my-agent") as m:
                 )
               })}
             </div>
+
+            {/* Halted runs. Shown above breaches because a halt is a decision
+                the system already took on the operator's behalf: they need to
+                know what was stopped and why before reading anything else. */}
+            {haltedSessions.length > 0 && (
+              <div className="card p-5 mb-6" style={{ borderColor: 'rgba(248,113,113,0.3)' }}>
+                <h2 className="text-sm font-semibold text-white mb-3 flex items-center gap-1.5">
+                  <OctagonX size={14} className="text-red-400" />
+                  Halted by Safe Halt
+                  <span className="text-slate-500 font-normal">· {haltedSessions.length}</span>
+                </h2>
+                <div className="space-y-2">
+                  {haltedSessions.slice(0, 5).map((s) => (
+                    <div key={s.session_id}
+                         className="rounded-lg px-3 py-2.5"
+                         style={{ background: 'rgba(248,113,113,0.06)' }}>
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <span className="text-sm text-white truncate max-w-[240px]" title={s.agent_id}>
+                          {s.agent_id}
+                        </span>
+                        <span className="text-[11px] text-slate-500">
+                          {s.step_count} steps · {timeAgo(s.started_at)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-red-300 mt-1">
+                        {s.halt_reason || 'Halted (reason not recorded)'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[11px] text-slate-600 mt-3">
+                  The SDK signalled a halt; the agent loop stopped itself. Halting is
+                  cooperative — nothing was killed mid-step.
+                </p>
+              </div>
+            )}
 
             {/* Breaches */}
             {filteredEvents.length > 0 && (
@@ -521,9 +652,16 @@ with client.monitor(agent_id="my-agent") as m:
                       <tr key={s.session_id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                         <td className="px-4 py-2.5 text-slate-200 max-w-[180px] truncate" title={s.agent_id}>
                           {s.agent_id}
-                          {s.halted && (
+                          {isLive(s) && (
                             <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded"
-                                  style={{ background: 'rgba(248,113,113,0.15)', color: '#fca5a5' }}>
+                                  style={{ background: 'rgba(52,211,153,0.15)', color: '#6ee7b7' }}>
+                              live
+                            </span>
+                          )}
+                          {s.halted && (
+                            <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded cursor-help"
+                                  style={{ background: 'rgba(248,113,113,0.15)', color: '#fca5a5' }}
+                                  title={s.halt_reason || 'Halted'}>
                               halted
                             </span>
                           )}
