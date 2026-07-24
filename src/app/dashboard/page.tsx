@@ -82,9 +82,22 @@ export default async function DashboardPage() {
     monitoringCount = 0
   }
 
-  // Derived statistics
-  const totalEvals    = agents.reduce((s, a) => s + a.evaluations_this_month, 0)
-  const totalLimit    = agents.reduce((s, a) => s + a.evaluation_limit, 0)
+  // Account-level usage. The monthly pool belongs to the ACCOUNT and is shared
+  // by all its agents (migration 08), so account_usage is the single source of
+  // truth. The per-agent evaluations_this_month column stopped being updated
+  // when that change landed: summing it here reported zero however much the
+  // account had actually used, and would double-count the limit if it ever
+  // resumed.
+  const { data: quota } = await supabase
+    .from('account_usage')
+    .select('plan_type, evaluation_limit, evaluations_this_month')
+    .eq('user_id', user?.id ?? '')
+    .maybeSingle()
+
+  const ACCOUNT_LIMITS: Record<string, number> = { free: 500, pro: 5000, enterprise: 2147483647 }
+  const accountPlan   = quota?.plan_type || agents[0]?.plan_type || 'free'
+  const totalEvals    = quota?.evaluations_this_month ?? 0
+  const totalLimit    = quota?.evaluation_limit || ACCOUNT_LIMITS[accountPlan] || 500
   const safeCount     = evaluations.filter(e => e.verdict === 'SAFE').length
   const safeRate      = evaluations.length > 0 ? Math.round(safeCount / evaluations.length * 100) : 0
   const avgPei        = evaluations.length > 0
@@ -132,10 +145,19 @@ export default async function DashboardPage() {
       {/* Stats row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard label="Active Agents"         value={agents.length}             accent />
-        <StatCard label="Evals This Month"       value={totalEvals}               sub={`of ${totalLimit} limit`} />
+        <StatCard label="Evals This Month"       value={totalEvals}               sub={`of ${totalLimit} · account-wide`} />
         <StatCard label="SAFE Rate (last 20)"    value={`${safeRate}%`}           sub={`${safeCount} / ${evaluations.length} runs`} />
         <StatCard label="Avg PEI (last 20)"      value={avgPei} />
       </div>
+
+      {/* Monitoring is deliberately not metered: it runs in the user's own
+          process and costs the platform only a small write per session. Saying
+          so here prevents the reasonable conclusion that the counter is broken
+          when monitored runs do not move it. */}
+      <p className="text-[11px] text-slate-600 -mt-6 mb-8">
+        Usage counts evaluations across the whole account. Runtime monitoring
+        sessions are not counted &mdash; they run on your machine.
+      </p>
 
       {/* Two-column layout: agents list + recent evaluations */}
       <div className="grid lg:grid-cols-2 gap-6">
