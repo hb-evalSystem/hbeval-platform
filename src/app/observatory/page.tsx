@@ -102,10 +102,10 @@ export default function ObservatoryPage() {
             The Reliability Observatory
           </h1>
           <p className="text-slate-400 max-w-2xl leading-relaxed">
-            Aggregate operational-reliability statistics from agents running in real
-            deployments. Benchmarks measure what an agent can do under clean
-            conditions; this measures how much of that survives contact with
-            failure.
+            Aggregate operational-reliability statistics, measured under systematic
+            fault injection. Benchmarks measure what an agent can do under clean
+            conditions; these five metrics measure how much of that survives
+            contact with failure.
           </p>
         </div>
 
@@ -152,6 +152,24 @@ export default function ObservatoryPage() {
 
         {!loading && !error && data?.available && (
           <>
+            {/* Data provenance, stated before any figure. The project's own
+                argument is that controlled and operational conditions differ,
+                so presenting reference data as field observation would
+                contradict the thing being measured. */}
+            {(data.sessions_live ?? 0) === 0 && (
+              <div className="card p-4 mb-6" style={{ borderColor: 'rgba(167,139,250,0.3)' }}>
+                <p className="text-sm text-slate-200 mb-1">
+                  Currently showing the reference dataset only
+                </p>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  These figures come from the published HB-Eval study, included as a
+                  baseline. No live deployment has contributed yet. Contributions are
+                  opt-in, and live and baseline counts are always reported separately
+                  below.
+                </p>
+              </div>
+            )}
+
             {/* Scale */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               {[
