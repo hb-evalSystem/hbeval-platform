@@ -14,8 +14,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import {
   Shield, LayoutDashboard, Bot, KeyRound,
-  CreditCard, Settings, LogOut, ExternalLink, Menu, X, Beaker,
-} from 'lucide-react'
+  CreditCard, Settings, LogOut, ExternalLink, Menu, X, Beaker, Activity } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import UsageMeter from '@/components/ui/UsageMeter'
@@ -24,6 +23,10 @@ const NAV_ITEMS = [
   { href: '/dashboard',          icon: LayoutDashboard, label: 'Overview'  },
   { href: '/dashboard/agents',   icon: Bot,             label: 'My Agents' },
   { href: '/dashboard/evaluate', icon: Beaker,          label: 'Evaluate'  },
+  // Monitoring answers a different question from Evaluate — not "was this run
+  // reliable?" but "is it still reliable while it runs?" — so it earns its own
+  // entry rather than living as a tab inside evaluation.
+  { href: '/dashboard/monitoring', icon: Activity,      label: 'Monitoring' },
   { href: '/dashboard/api-keys', icon: KeyRound,        label: 'API Keys'  },
   { href: '/dashboard/billing',  icon: CreditCard,      label: 'Billing'   },
   { href: '/dashboard/settings', icon: Settings,        label: 'Settings'  },
@@ -89,7 +92,11 @@ export default function Sidebar({ user, usage }: SidebarProps) {
       {/* External links */}
       <div className="space-y-1 mb-4">
         {[
-          { label: 'Documentation',  href: 'https://github.com/hb-evalSystem/HB-System/blob/main/docs/QUICKSTART.md' },
+          // Docs now live on this domain. Keeping them on a subdirectory rather
+          // than an external repo consolidates search authority into one root
+          // instead of splitting it across domains.
+          { label: 'Documentation',  href: '/docs' },
+          { label: 'Observatory',    href: '/observatory' },
           { label: 'Live Dashboard', href: 'https://hb-system-fffjnvukwgqxcuyu7t7ylh.streamlit.app/' },
           { label: 'Verify Results', href: 'https://hbeval-verify-hxkrf5egzvp5qmvhs5wqcq.streamlit.app/' },
         ].map(({ label, href }) => (
