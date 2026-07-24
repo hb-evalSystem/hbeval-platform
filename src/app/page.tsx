@@ -22,7 +22,9 @@ function Navbar() {
       <div className="hidden md:flex items-center gap-8 text-sm text-slate-400">
         <a href="#metrics"   className="hover:text-white transition-colors">Metrics</a>
         <a href="#memory"    className="hover:text-white transition-colors">Memory</a>
-        <a href="#proof"     className="hover:text-white transition-colors">Live Proof</a>
+        <a href="#capabilities" className="hover:text-white transition-colors">Capabilities</a>
+        <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
+        <Link href="/observatory" className="hover:text-white transition-colors">Observatory</Link>
         <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
         <a href="https://github.com/hb-evalSystem/HB-System" target="_blank" rel="noopener"
            className="hover:text-white transition-colors flex items-center gap-1">
@@ -361,6 +363,129 @@ function FrameworkIntegrations() {
   )
 }
 
+function Capabilities() {
+  // Every capability the platform has, on one screen. A visitor who cannot tell
+  // from the homepage that live monitoring or Safe Halt exist will never
+  // discover them: a feature nobody can find is, in practice, a feature that
+  // does not exist.
+  const items = [
+    {
+      title: 'Evaluate — after the run',
+      color: '#3b82f6',
+      lead: 'Score an agent against a fault-injection battery and get a verdict.',
+      body: 'Two paths. Run the battery locally and send the responses for '
+          + 'server-side scoring — free, and your model keys never leave your '
+          + 'machine. Or have the platform call your agent endpoint itself, with '
+          + 'nobody in the middle, so the result carries a verified mark.',
+      points: ['18–30 injected scenarios', 'Scored on the server, not the client',
+               'Local path free · verified path paid'],
+      href: '/docs#evaluation',
+    },
+    {
+      title: 'Monitor — during the run',
+      color: '#34d399',
+      lead: 'Watch reliability move while the agent is still working.',
+      body: 'Evaluation judges a run once it is over. Monitoring recomputes the '
+          + 'metrics after every step, so a collapse is visible at the step it '
+          + 'happens rather than in a post-mortem. Per-step signals are computed '
+          + 'in your process; only the session summary is sent.',
+      points: ['Metrics update live on the dashboard', 'No network call per step',
+               'Free — it runs on your machine'],
+      href: '/docs#monitoring',
+    },
+    {
+      title: 'Safe Halt — stop the collapse',
+      color: '#f87171',
+      lead: 'Measurement that acts, not just reports.',
+      body: 'Set a floor and the session stops the agent when a metric stays '
+          + 'under it for several consecutive steps. Sustained, not '
+          + 'instantaneous: one bad step is noise, and a guard that fires on '
+          + 'noise gets switched off. The halt is cooperative — nothing is killed '
+          + 'mid-step, because that is how transactions end up half applied.',
+      points: ['Off unless you set a policy', 'Requires a sustained breach',
+               'Reason recorded and shown'],
+      href: '/docs#safe-halt',
+    },
+    {
+      title: 'Observatory — the field, not the lab',
+      color: '#a78bfa',
+      lead: 'Aggregate reliability statistics across deployments.',
+      body: 'Published studies measure agents under controlled conditions. The '
+          + 'Observatory measures them where they actually run. Contribution is '
+          + 'opt-in and anonymous at the source, and figures are withheld until '
+          + 'enough independent accounts have contributed.',
+      points: ['Public — no sign-in', 'Opt-in, identifiers dropped on write',
+               'Shows which metric fails most often'],
+      href: '/observatory',
+    },
+    {
+      title: 'MCP — ask your assistant',
+      color: '#fbbf24',
+      lead: 'Reach all of it without opening a dashboard.',
+      body: 'HB-Eval is a remote MCP server. Add one URL to Claude, ChatGPT or '
+          + 'any MCP client, sign in once, then ask in plain language: list my '
+          + 'agents, show the trend, explain a verdict. The assistant calls the '
+          + 'tools itself.',
+      points: ['One URL, one sign-in, no install', 'Six tools',
+               'Works with any MCP client'],
+      href: '/docs#mcp',
+    },
+  ]
+
+  return (
+    <section id="capabilities" className="py-24 px-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-14">
+          <p className="section-label mb-3">Everything In The Platform</p>
+          <h2 className="text-4xl font-bold text-white mb-4">
+            Five things HB-Eval does
+          </h2>
+          <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            Measure before deployment, watch during it, stop it when it breaks,
+            compare against the field, and reach all of it from your assistant.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {items.map((it) => (
+            <div key={it.title} className="card p-6">
+              <div className="flex items-start gap-4">
+                <span className="mt-1.5 w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ background: it.color }} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2 mb-1">
+                    <h3 className="text-lg font-semibold text-white">{it.title}</h3>
+                    <a href={it.href}
+                       className="text-xs text-blue-400 hover:text-blue-300 whitespace-nowrap">
+                      How it works &rarr;
+                    </a>
+                  </div>
+                  <p className="text-sm text-slate-200 mb-2">{it.lead}</p>
+                  <p className="text-sm text-slate-400 leading-relaxed mb-3">{it.body}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {it.points.map((p) => (
+                      <span key={p} className="text-[11px] px-2 py-1 rounded"
+                            style={{ background: 'rgba(255,255,255,0.04)', color: '#94a3b8' }}>
+                        {p}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-center mt-10">
+          <Link href="/docs" className="btn-secondary text-sm px-6 py-3 inline-flex">
+            Read how each part works
+          </Link>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function HowItWorks() {
   const steps = [
     { n: '01', title: 'Install the SDK', body: 'pip install hb-eval-sdk — one command, zero infrastructure setup required.' },
@@ -442,6 +567,8 @@ function Footer() {
              className="hover:text-slate-300 transition-colors">PyPI</a>
           <a href="https://hbeval-verify-hxkrf5egzvp5qmvhs5wqcq.streamlit.app/" target="_blank" rel="noopener"
              className="hover:text-slate-300 transition-colors">Verify Results</a>
+          <Link href="/docs" className="hover:text-slate-300 transition-colors">Docs</Link>
+          <Link href="/observatory" className="hover:text-slate-300 transition-colors">Observatory</Link>
           <Link href="/pricing" className="hover:text-slate-300 transition-colors">Pricing</Link>
           <Link href="/legal/terms" className="hover:text-slate-300 transition-colors">Terms</Link>
           <Link href="/legal/privacy" className="hover:text-slate-300 transition-colors">Privacy</Link>
@@ -546,6 +673,7 @@ export default function LandingPage() {
       <Navbar />
       <main>
         <Hero />
+        <Capabilities />
         <LiveProof />
         <MetricsSection />
         <EvaluationPaths />
