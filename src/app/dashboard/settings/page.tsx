@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Settings as SettingsIcon, User, Mail, Calendar } from 'lucide-react'
 import DangerZone from './DangerZone'
 import ExportData from './ExportData'
+import ObservatoryConsent from './ObservatoryConsent'
 
 export default async function SettingsPage() {
   const supabase = createClient()
@@ -42,6 +43,11 @@ export default async function SettingsPage() {
 
       {/* Data management */}
       <section className="mb-8">
+        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Community</h2>
+        <ObservatoryConsent userId={user!.id} />
+      </section>
+
+      <section>
         <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Your data</h2>
         <ExportData />
       </section>
