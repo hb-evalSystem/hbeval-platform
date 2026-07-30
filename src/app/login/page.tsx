@@ -6,10 +6,31 @@ import Link from 'next/link'
 import { Shield, Mail, Lock, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
+// Only same-origin relative paths are accepted as a post-login destination.
+//
+// Without this, /login?redirect=https://evil.example sends the user off-site
+// immediately after a successful sign-in — a phishing link that legitimately
+// lives on hbeval.com right up to the moment it hands the visitor to an
+// attacker's replica.
+//
+// Rejected: absolute URLs, protocol-relative //host (which browsers treat as
+// external), and anything containing a scheme.
+function safeRedirect(path: string | null): string {
+  const fallback = '/dashboard'
+  if (!path) return fallback
+  if (!path.startsWith('/')) return fallback
+  if (path.startsWith('//')) return fallback
+  if (path.includes('://')) return fallback
+  // Backslashes are normalised to forward slashes by some browsers, so \\evil
+  // would otherwise slip past the // check above.
+  if (path.includes('\\')) return fallback
+  return path
+}
+
 function LoginForm() {
   const router   = useRouter()
   const params   = useSearchParams()
-  const redirect = params.get('redirect') || '/dashboard'
+  const redirect = safeRedirect(params.get('redirect'))
   const supabase = createClient()
 
   const [email,    setEmail]    = useState('')
@@ -70,7 +91,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 text-white font-semibold text-xl">
             <Shield size={24} className="text-blue-500" />
-            HB-Eval <span className="text-blue-500">OS</span>
+            HB-Eval
           </Link>
           <p className="text-slate-400 text-sm mt-2">Sign in to your dashboard</p>
         </div>
