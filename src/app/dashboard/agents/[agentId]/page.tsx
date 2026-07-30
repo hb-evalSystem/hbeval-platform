@@ -121,6 +121,7 @@ export default function AgentDetailPage() {
   const [copied,       setCopied]       = useState(false)
   const [renaming,     setRenaming]     = useState(false)
   const [newName,      setNewName]      = useState('')
+  const [renameError,  setRenameError]  = useState('')
 
   // Layer 2 (HCI-EDM) explanation state
   const [explainFor,   setExplainFor]   = useState<string | null>(null)  // evaluation id being explained
@@ -164,11 +165,28 @@ export default function AgentDetailPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  // Renaming goes through a server route, not a direct table write. The browser
+  // no longer holds UPDATE on agents at all: that permission covered every
+  // column, including plan_type and evaluation_limit, which the Gateway trusts
+  // to decide entitlement. See migration 14.
   async function saveRename() {
     if (!agent || !newName.trim()) return
-    await supabase.from('agents').update({ name: newName.trim() }).eq('id', agent.id)
-    setAgent({ ...agent, name: newName.trim() })
-    setRenaming(false)
+    setRenameError('')
+    try {
+      const res = await fetch('/api/agents/rename', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agent_pk: agent.id, name: newName.trim() }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error || 'Could not rename the agent.')
+      setAgent({ ...agent, name: json.name ?? newName.trim() })
+      setRenaming(false)
+    } catch (err) {
+      // Surfaced rather than swallowed: a rename that silently fails leaves the
+      // UI showing a name the database does not have.
+      setRenameError(err instanceof Error ? err.message : 'Could not rename the agent.')
+    }
   }
 
   // Layer 2 — ask the performance-grounded interpreter why this verdict stands.
@@ -254,11 +272,15 @@ export default function AgentDetailPage() {
           </div>
           <div>
             {renaming ? (
-              <div className="flex items-center gap-2">
-                <input value={newName} onChange={e => setNewName(e.target.value)}
-                       className="text-xl font-bold w-64" onKeyDown={e => e.key === 'Enter' && saveRename()} />
-                <button onClick={saveRename}    className="btn-primary text-xs px-3 py-1">Save</button>
-                <button onClick={() => setRenaming(false)} className="btn-secondary text-xs px-3 py-1">Cancel</button>
+              <div>
+                <div className="flex items-center gap-2">
+                  <input value={newName} onChange={e => setNewName(e.target.value)}
+                         className="text-xl font-bold w-64" onKeyDown={e => e.key === 'Enter' && saveRename()} />
+                  <button onClick={saveRename} className="btn-primary text-xs px-3 py-1">Save</button>
+                  <button onClick={() => { setRenaming(false); setRenameError('') }}
+                          className="btn-secondary text-xs px-3 py-1">Cancel</button>
+                </div>
+                {renameError && <p className="text-xs text-red-400 mt-1.5">{renameError}</p>}
               </div>
             ) : (
               <h1 className="text-2xl font-bold text-white cursor-pointer hover:text-blue-300 transition-colors"
