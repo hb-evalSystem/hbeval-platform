@@ -5,6 +5,8 @@ import { Settings as SettingsIcon, User, Mail, Calendar } from 'lucide-react'
 import DangerZone from './DangerZone'
 import ExportData from './ExportData'
 import ObservatoryConsent from './ObservatoryConsent'
+import AlertDestinations from './AlertDestinations'
+import WorkspaceSection from './WorkspaceSection'
 
 export default async function SettingsPage() {
   const supabase = createClient()
@@ -44,6 +46,10 @@ export default async function SettingsPage() {
       {/* Data management */}
       <section className="mb-8">
         <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Community</h2>
+        <WorkspaceSection userId={user!.id} />
+
+        <AlertDestinations userId={user!.id} />
+
         <ObservatoryConsent userId={user!.id} />
       </section>
 
