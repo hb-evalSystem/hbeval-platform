@@ -569,6 +569,7 @@ function Footer() {
              className="hover:text-slate-300 transition-colors">Verify Results</a>
           <Link href="/docs" className="hover:text-slate-300 transition-colors">Docs</Link>
           <Link href="/observatory" className="hover:text-slate-300 transition-colors">Observatory</Link>
+          <Link href="/status" className="hover:text-slate-300 transition-colors">Status</Link>
           <Link href="/pricing" className="hover:text-slate-300 transition-colors">Pricing</Link>
           <Link href="/legal/terms" className="hover:text-slate-300 transition-colors">Terms</Link>
           <Link href="/legal/privacy" className="hover:text-slate-300 transition-colors">Privacy</Link>
