@@ -2,7 +2,7 @@
 // app/dashboard/agents/[agentId]/page.tsx
 // This is the most important page in the dashboard — it shows everything
 // about a single agent: its API key, usage quota, evaluation history,
-// metric trends, and certification status.
+// metric trends, and assessed reliability tier.
 // It is a Client Component because of the copy-to-clipboard API key interaction.
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -11,7 +11,7 @@ import {
   Bot, Copy, Check, Eye, EyeOff, ArrowLeft, Activity,
   Shield, TrendingUp, AlertCircle, CheckCircle, XCircle,
   Zap, Brain, BarChart2, Clock, Database, HelpCircle,
-  Lightbulb, Loader2, X
+  Lightbulb, Loader2, X, BadgeCheck
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -289,14 +289,24 @@ export default function AgentDetailPage() {
               </h1>
             )}
             <div className="text-sm text-slate-500 font-mono mt-0.5">{agent.agent_id}</div>
+            {/* The passport is the shareable form of everything on this page:
+                signed, and verifiable by someone who has no account here. */}
+            <Link href={`/dashboard/agents/${agentId}/passport`}
+                  className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 mt-2">
+              <BadgeCheck size={13} /> Agent Passport
+            </Link>
           </div>
         </div>
 
-        {/* Certification status */}
+        {/* Reliability tier.
+            Labelled "tier", never "certification": HB-Eval assesses observed
+            behaviour and is not an accreditation body. The word was removed
+            from the paper for that reason and must not survive in the
+            interface. */}
         <div className="card px-4 py-3 text-center">
           {currentTier ? (
             <>
-              <div className="text-xs text-slate-500 mb-1">Certification</div>
+              <div className="text-xs text-slate-500 mb-1">Reliability tier</div>
               <div className="font-bold text-lg" style={{
                 color: currentTier === 3 ? '#f59e0b' : currentTier === 2 ? '#7c3aed' : '#2563eb'
               }}>
@@ -308,7 +318,7 @@ export default function AgentDetailPage() {
             </>
           ) : (
             <>
-              <div className="text-xs text-slate-500 mb-1">Certification</div>
+              <div className="text-xs text-slate-500 mb-1">Reliability tier</div>
               <Shield size={18} className="text-slate-600 mx-auto" />
               <div className="text-xs text-slate-600 mt-1">
                 {n < 100 ? `${n} / 100 runs` : 'Below thresholds'}
