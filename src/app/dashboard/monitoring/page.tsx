@@ -24,6 +24,7 @@
 //   dimension that was never measured.
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   Activity, AlertTriangle, ArrowLeft, ArrowUpRight, ArrowDownRight, Minus,
   Loader2, RefreshCw, ShieldAlert, Terminal, Copy, Check, Radio, OctagonX,
@@ -181,6 +182,7 @@ export default function MonitoringPage() {
   const [live, setLive] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [copied, setCopied] = useState(false)
+  const router = useRouter()
   const [realtime, setRealtime] = useState(false)
 
   const load = useCallback(async (isRefresh = false) => {
@@ -649,7 +651,10 @@ with client.monitor(agent_id="my-agent") as m:
                   </thead>
                   <tbody>
                     {filtered.slice(0, 25).map((s) => (
-                      <tr key={s.session_id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <tr key={s.session_id}
+                          onClick={() => router.push(`/dashboard/monitoring/${s.session_id}`)}
+                          className="cursor-pointer hover:bg-white/[0.02] transition-colors"
+                          style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                         <td className="px-4 py-2.5 text-slate-200 max-w-[180px] truncate" title={s.agent_id}>
                           {s.agent_id}
                           {isLive(s) && (
@@ -684,6 +689,7 @@ with client.monitor(agent_id="my-agent") as m:
             </div>
 
             <p className="text-[11px] text-slate-600 mt-4">
+              Click a row to open its timeline, replay and halt audit.
               Showing the most recent {SESSION_LIMIT} sessions. Values marked &ldquo;—&rdquo; were
               undefined for that run (for example IRS when no fault was injected), not zero.
             </p>
