@@ -14,7 +14,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import {
   Shield, LayoutDashboard, Bot, KeyRound,
-  CreditCard, Settings, LogOut, ExternalLink, Menu, X, Beaker, Activity } from 'lucide-react'
+  CreditCard, Settings, LogOut, ExternalLink, Menu, X, Beaker, Activity, FlaskConical } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import UsageMeter from '@/components/ui/UsageMeter'
@@ -27,6 +27,10 @@ const NAV_ITEMS = [
   // reliable?" but "is it still reliable while it runs?" — so it earns its own
   // entry rather than living as a tab inside evaluation.
   { href: '/dashboard/monitoring', icon: Activity,      label: 'Monitoring' },
+  // The Studio is where a team decides WHICH faults matter to them before
+  // running anything. It sits next to Evaluate and Monitoring because it is
+  // the step that comes before both.
+  { href: '/dashboard/studio',   icon: FlaskConical,    label: 'Studio'    },
   { href: '/dashboard/api-keys', icon: KeyRound,        label: 'API Keys'  },
   { href: '/dashboard/billing',  icon: CreditCard,      label: 'Billing'   },
   { href: '/dashboard/settings', icon: Settings,        label: 'Settings'  },
