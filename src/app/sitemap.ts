@@ -16,6 +16,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Observatory changes as contributions arrive, so it is crawled more often.
     { url: `${SITE}/observatory`,   lastModified: now, changeFrequency: 'daily',   priority: 0.8 },
     { url: `${SITE}/pricing`,       lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    // Indexed on purpose. An enterprise evaluator looks for a status page
+    // before they look at features, and not finding one is itself an answer.
+    { url: `${SITE}/status`,        lastModified: now, changeFrequency: 'daily',   priority: 0.6 },
     { url: `${SITE}/legal/terms`,   lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
     { url: `${SITE}/legal/privacy`, lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
   ]
