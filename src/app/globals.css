@@ -4,13 +4,21 @@
 
 /* ── Custom properties — single source of truth for the design system ── */
 :root {
-  --canvas:       #060c18;
-  --surface:      rgba(255,255,255,0.04);
-  --surface-hover:rgba(255,255,255,0.07);
-  --border:       rgba(255,255,255,0.08);
-  --border-strong:rgba(255,255,255,0.15);
+  /* Lightened one step from the original near-black.
+     #060c18 read as a void on bright screens and pushed contrast so far that
+     muted text became unreadable outdoors. This is still unmistakably a dark
+     theme, with enough lift that surfaces separate from the canvas without
+     needing heavy borders. */
+  --canvas:       #0f1729;
+  --surface:      rgba(255,255,255,0.055);
+  --surface-hover:rgba(255,255,255,0.09);
+  --border:       rgba(255,255,255,0.11);
+  --border-strong:rgba(255,255,255,0.20);
   --text:         #f1f5f9;
-  --text-muted:   #64748b;
+  /* Raised from #64748b, which failed WCAG AA against the old canvas at small
+     sizes. Secondary text is where most of a page's information actually
+     lives; it should not be the least readable part of it. */
+  --text-muted:   #94a3b8;
   --brand:        #2563eb;
   --brand-glow:   rgba(37,99,235,0.20);
   --safe:         #10b981;
