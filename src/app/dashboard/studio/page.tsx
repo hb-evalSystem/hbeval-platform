@@ -98,7 +98,22 @@ export default function StudioPage() {
         }),
       })
       if (!res.ok) throw new Error(`Gateway returned ${res.status}`)
-      setPreview(await res.json())
+
+      // Checked before it is trusted. A response missing `scenarios` is not a
+      // preview, and rendering it would throw inside the component rather than
+      // here — which reaches the visitor as a blank "application error" with no
+      // indication that the Gateway was the problem.
+      //
+      // A Gateway older than 2.7.0 predates this endpoint and can answer 200
+      // with a different shape, so a status check alone is not enough.
+      const data = await res.json()
+      if (!data || !Array.isArray(data.scenarios)) {
+        throw new Error(
+          'The Gateway responded, but not with a battery preview. It may be '
+          + 'running a version older than 2.7.0.',
+        )
+      }
+      setPreview(data)
       setError('')
     } catch (err) {
       // Said plainly. An empty panel that looks like "no faults exist" would
@@ -193,7 +208,7 @@ print(report["verdict"], report["metrics"])`
                 <span className="text-slate-600"> · none selected = all</span>
               </p>
               <div className="space-y-1.5">
-                {(preview?.available.fault_types ?? Object.keys(FAULT_MEANING)).map(f => {
+                {(preview?.available?.fault_types ?? Object.keys(FAULT_MEANING)).map(f => {
                   const on = faults.includes(f)
                   return (
                     <button key={f} onClick={() => toggle(faults, setFaults, f)}
@@ -220,7 +235,7 @@ print(report["verdict"], report["metrics"])`
                 Domains<span className="text-slate-600"> · none = all</span>
               </p>
               <div className="flex flex-wrap gap-1.5">
-                {(preview?.available.domains ?? []).map(d => {
+                {(preview?.available?.domains ?? []).map(d => {
                   const on = domains.includes(d)
                   return (
                     <button key={d} onClick={() => toggle(domains, setDomains, d)}
@@ -296,12 +311,12 @@ print(report["verdict"], report["metrics"])`
                   </div>
                 )}
 
-                {preview.unknown_selections.length > 0 && (
+                {(preview.unknown_selections?.length ?? 0) > 0 && (
                   <div className="card p-3">
                     <p className="text-xs text-red-300">
                       Not recognised and ignored:{' '}
                       <span className="font-mono">
-                        {preview.unknown_selections.join(', ')}
+                        {(preview.unknown_selections ?? []).join(', ')}
                       </span>
                     </p>
                   </div>
@@ -317,7 +332,7 @@ print(report["verdict"], report["metrics"])`
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {Object.entries(preview.counts)
+                    {Object.entries(preview.counts ?? {})
                       .sort((a, b) => b[1] - a[1])
                       .map(([type, n]) => (
                         <span key={type}
@@ -338,7 +353,7 @@ print(report["verdict"], report["metrics"])`
                     What the agent receives
                   </p>
                   <div>
-                    {preview.scenarios.map(s => {
+                    {(preview.scenarios ?? []).map(s => {
                       const open = expanded === s.index
                       return (
                         <div key={s.index}
