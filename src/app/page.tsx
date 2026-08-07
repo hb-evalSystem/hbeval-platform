@@ -23,7 +23,7 @@ import Link from 'next/link'
 import {
   ArrowRight, Play, Activity, Beaker, Bell, Shield, GitBranch,
   BadgeCheck, Radio, Boxes, Globe, FileCode, Terminal, LineChart,
-  AlertTriangle, CheckCircle2,
+  AlertTriangle, CheckCircle2, Database, MessageSquareQuote, Puzzle, Network,
 } from 'lucide-react'
 
 export const metadata = {
@@ -80,6 +80,9 @@ const CAPABILITIES = [
   { icon: LineChart, title: 'Observatory',
     body: 'Aggregate reliability across contributed runs. Anonymous at write time, withheld until five independent accounts.',
     href: '/observatory', cta: 'View the data' },
+  { icon: Network, title: 'How it fits together',
+    body: 'Where your data goes, what leaves your machine, and what we can see — drawn from the implementation, not an intended design.',
+    href: '/architecture', cta: 'See the architecture' },
   { icon: Globe, title: 'Status and retention',
     body: 'Health checked rather than asserted, with the last automatic data cleanup published so the policy is verifiable.',
     href: '/status', cta: 'Service status' },
@@ -292,6 +295,110 @@ with client.monitor(
         </div>
       </section>
 
+      {/* ── Framework integrations ──
+          Restored. These were on the previous homepage and the rewrite lost
+          them, which meant a LangChain user could read the whole page without
+          learning their framework was supported — the single question most
+          visitors arrive with. */}
+      <section className="px-6 py-14" style={{ borderTop: '1px solid var(--border)' }}>
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-bold text-white mb-3 flex items-center gap-2.5">
+            <Puzzle size={20} className="text-blue-400" />
+            Works with what you already use
+          </h2>
+          <p className="text-sm text-slate-300 leading-relaxed max-w-2xl mb-6">
+            One adapter call. Your agent keeps its own control flow — HB-Eval
+            measures it rather than replacing it.
+          </p>
+
+          <div className="grid sm:grid-cols-3 gap-3">
+            {([
+              ['LangChain', '#f97316', 'adapt_langchain_agent(agent_executor)'],
+              ['LangGraph', '#8b5cf6', 'adapt_langgraph_agent(compiled_graph)'],
+              ['CrewAI', '#10b981', 'adapt_crewai_agent(crew_agent)'],
+            ] as const).map(([name, colour, call]) => (
+              <div key={name} className="card p-4">
+                <p className="text-sm mb-2" style={{ color: colour }}>{name}</p>
+                <code className="text-[11px] font-mono text-slate-400 break-all">
+                  {call}
+                </code>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs text-slate-400 mt-4 leading-relaxed">
+            Not using a framework? The SDK works around any loop, and an
+            OpenTelemetry-instrumented agent needs{' '}
+            <Link href="/docs#otel" className="text-blue-400 hover:text-blue-300">
+              one import and no calls at all
+            </Link>.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Governed memory and grounded explanation ──
+          Also restored. These are two deployed layers with published preprints
+          behind them — arguably the strongest research claim the project has —
+          and the rewrite dropped both. */}
+      <section className="px-6 py-14" style={{ borderTop: '1px solid var(--border)' }}>
+        <div className="max-w-4xl mx-auto">
+          <p className="section-label mb-3">Beyond scoring</p>
+          <h2 className="text-2xl font-bold text-white mb-3">
+            A memory governed by reliability — and explanations grounded in it
+          </h2>
+          <p className="text-sm text-slate-300 leading-relaxed max-w-2xl mb-8">
+            Most systems remember everything and explain with confident guesses.
+            HB-Eval does the opposite: it remembers only what proved reliable,
+            and explains only what it can ground in a qualified record.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="card p-5">
+              <div className="flex items-center gap-2.5 mb-3">
+                <Database size={17} className="text-emerald-400" />
+                <p className="text-sm text-white">Quality-governed memory</p>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed mb-3">
+                Every run is judged before it is remembered. A trajectory enters
+                qualified memory only when it clears{' '}
+                <span className="font-mono text-emerald-300">PEI ≥ 0.80</span> and{' '}
+                <span className="font-mono text-emerald-300">TI ≥ 4.0</span>.
+              </p>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                A memory that stores everything eventually recalls its own worst
+                behaviour as precedent. The gate is what stops an agent learning
+                from the runs it should forget.
+              </p>
+            </div>
+
+            <div className="card p-5">
+              <div className="flex items-center gap-2.5 mb-3">
+                <MessageSquareQuote size={17} className="text-blue-400" />
+                <p className="text-sm text-white">Performance-grounded explanations</p>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed mb-3">
+                Explanations cite stored episodes above a similarity threshold
+                and quote figures from the record, not from a model. Where no
+                precedent exists, the system says so and defers to a human.
+              </p>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Saying &ldquo;I have no comparable case&rdquo; is a useful
+                answer. A fluent explanation with no evidence behind it is not,
+                and is harder to catch.
+              </p>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-400 mt-4">
+            Both layers are live in production and implement published work —
+            EDM and HCI-EDM.{' '}
+            <Link href="/science" className="text-blue-400 hover:text-blue-300">
+              Papers, definitions and open problems
+            </Link>
+          </p>
+        </div>
+      </section>
+
       {/* ── Agent Passport ── */}
       <section className="px-6 py-16" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="max-w-4xl mx-auto">
@@ -391,8 +498,10 @@ with client.monitor(
           <div className="grid sm:grid-cols-4 gap-8 mb-8">
             {([
               ['Product', [
-                ['Demo', '/demo'], ['Documentation', '/docs'],
-                ['Pricing', '/pricing'], ['Observatory', '/observatory'],
+                ['Demo', '/demo'], ['Architecture', '/architecture'],
+                ['Documentation', '/docs'],
+                ['Pricing', '/pricing'], ['Science', '/science'],
+                ['Observatory', '/observatory'],
                 ['Status', '/status'],
               ]],
               ['Use it', [
