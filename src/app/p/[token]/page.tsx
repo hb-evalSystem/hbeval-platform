@@ -51,6 +51,16 @@ interface Passport {
                    threshold: number | null; at: string; triggered_by: string }>
     alerts_raised: number; alerts_delivered: number; alerts_failed: number
   }
+  provenance?: {
+    model: string | string[] | null
+    model_version: string | string[] | null
+    prompt_version: string | string[] | null
+    framework: string | string[] | null
+    commit: string | string[] | null
+    changed_during_window: string[]
+    note: string
+    warning?: string
+  }
   measurement: {
     fingerprint: string
     battery_spec_fingerprint: string | null
@@ -425,6 +435,39 @@ export default function PublicPassportPage({ params }: { params: { token: string
             {p.reliability.evidence.note}
           </p>
         </div>
+
+        {/* What produced these numbers. A record of behaviour that does not
+            identify what behaved describes nothing in particular. */}
+        {p.provenance && (
+          <div className="rounded-xl p-5 mb-4"
+               style={{ background: PAPER, border: `1px solid ${RULE}` }}>
+            <p className="text-[11px] tracking-[0.2em] mb-3" style={{ color: GOLD }}>
+              WHAT PRODUCED THIS
+            </p>
+            {p.provenance.warning && (
+              <p className="text-[11px] text-amber-300 leading-relaxed mb-3">
+                {p.provenance.warning}
+              </p>
+            )}
+            {([['Model', p.provenance.model],
+               ['Model version', p.provenance.model_version],
+               ['Prompt version', p.provenance.prompt_version],
+               ['Framework', p.provenance.framework],
+               ['Commit', p.provenance.commit]] as const).map(([label, value]) => (
+              <div key={label} className="flex justify-between gap-4 text-xs py-1.5"
+                   style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                <span className="text-slate-500 shrink-0">{label}</span>
+                <span className="font-mono text-right truncate"
+                      style={{ color: value ? '#cbd5e1' : '#64748b' }}>
+                  {Array.isArray(value) ? value.join(' \u2192 ') : (value ?? 'not recorded')}
+                </span>
+              </div>
+            ))}
+            <p className="text-[11px] text-slate-500 mt-3 leading-relaxed">
+              {p.provenance.note}
+            </p>
+          </div>
+        )}
 
         {/* Provenance */}
         <div className="rounded-xl p-5 mb-4" style={{ background: PAPER, border: `1px solid ${RULE}` }}>
