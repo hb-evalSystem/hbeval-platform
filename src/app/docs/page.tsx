@@ -21,7 +21,7 @@ import PassportVerifier from './PassportVerifier'
 import {
   BookOpen, ArrowLeft, Play, Activity, OctagonX, Telescope, Bot, Terminal,
   ArrowRight, ChevronRight, KeyRound, Beaker, ShieldCheck, MessageSquare,
-  Layers, GitBranch, Radio, Bell, BadgeCheck, Boxes,
+  Layers, GitBranch, Radio, Bell, BadgeCheck, Boxes, Users,
   GitPullRequest, BookMarked, AlertTriangle, Rocket,
 } from 'lucide-react'
 import CopyButton from './CopyButton'
@@ -85,6 +85,7 @@ const NAV = [
   { href: '#gate', label: 'CI gate' },
   { href: '#alerts', label: 'Alerting' },
   { href: '#production', label: 'Production guide' },
+  { href: '#workspaces', label: 'Workspaces and audit' },
   { href: '#passport', label: 'Agent Passport' },
   { href: '#sdks', label: 'Python and TypeScript' },
   { href: '#production', label: 'Production guide' },
@@ -822,6 +823,105 @@ jobs:
           </Section>
 
 
+
+          <Section id="workspaces" title="Workspaces and audit export"
+                   kicker="Teams and Compliance" icon={<Users size={13} />}>
+            <p>
+              Every account has a personal workspace, created automatically.
+              Agents belong to it, and the schema supports shared workspaces
+              with roles.
+            </p>
+
+            <p>Three roles, because three real distinctions exist:</p>
+            <ul>
+              <li><strong className="text-slate-100">owner</strong> — full
+                  control, including billing and deletion.</li>
+              <li><strong className="text-slate-100">member</strong> — can use
+                  agents and see results.</li>
+              <li><strong className="text-slate-100">viewer</strong> — read
+                  only.</li>
+            </ul>
+            <p>
+              A fourth is one enum value away, and will be added when somebody
+              describes a distinction the three cannot express — which is the
+              right moment, rather than guessing at a permission matrix before
+              any team has used one.
+            </p>
+
+            <h3 className="text-sm text-slate-100 mt-6 mb-2">Audit export</h3>
+            <p>
+              This is the part that needs no team to justify. An auditor&rsquo;s
+              question is &ldquo;show me every automated decision this system
+              made, and who was told&rdquo; — and until this existed, the data
+              to answer it was accumulating with no way to get it out. A record
+              nobody can retrieve is not a record.
+            </p>
+            <p>
+              From{' '}
+              <Link href="/dashboard/settings" className="text-blue-400 hover:text-blue-300">
+                Settings
+              </Link>
+              , export 30, 90 or 365 days as JSON. It contains four sections:
+            </p>
+            <ul>
+              <li><strong className="text-slate-100">members</strong> — who has
+                  access, at what role, since when.</li>
+              <li><strong className="text-slate-100">halt_decisions</strong> —
+                  every automated stop, with the metric, its value, the
+                  threshold, how many consecutive steps triggered it, and the
+                  policy verbatim.</li>
+              <li><strong className="text-slate-100">alerts</strong> — every
+                  notification, whether it was delivered, and the error if it
+                  was not.</li>
+              <li><strong className="text-slate-100">sessions</strong> — every
+                  monitored run with its five metrics.</li>
+            </ul>
+            <p>
+              <strong className="text-slate-100">Failed alert deliveries are
+              included.</strong> An alerting record that hid them would read as
+              though everyone had been told, which is exactly the impression an
+              audit exists to test.
+            </p>
+            <p>
+              Step-level snapshots are retained for 90 days, so a 365-day export
+              returns the sessions and halt decisions that outlive them rather
+              than pretending the finer detail is still there. For a permanent
+              record, issue an{' '}
+              <a href="#passport" className="text-blue-400 hover:text-blue-300">
+                Agent Passport
+              </a>{' '}
+              — it is signed and does not expire from our side.
+            </p>
+
+            <h3 className="text-sm text-slate-100 mt-6 mb-2">
+              How access is enforced
+            </h3>
+            <p>
+              Workspace membership <em>extends</em> access; it never replaces
+              it. Postgres combines row-level policies with OR, so a row is
+              visible if you own it — as before — or if you are a member of its
+              workspace. Nothing that worked before workspaces existed can stop
+              working because of them.
+            </p>
+            <p>
+              <strong className="text-slate-100">Membership is written
+              server-side only.</strong> A client-writable membership table is a
+              client-writable permission system: anyone could insert themselves
+              as owner of any workspace whose id they had seen. Row-level
+              security constrains rows, not the columns or values a write
+              touches, so a permission row must never be client-writable.
+            </p>
+            <p>
+              For the same reason, sharing grants read access to agents and
+              never write access. Agent records carry the plan type, and a
+              policy that allowed a shared write could allow a plan change.
+            </p>
+            <p className="text-slate-400">
+              Invitation flows and seat billing are not built. They need a real
+              team to design well, and inventing them for nobody produces a
+              shape the first actual team then has to work around.
+            </p>
+          </Section>
 
           <Section id="passport" title="Agent Passport — a record anyone can verify"
                    kicker="Signed Evidence" icon={<BadgeCheck size={13} />}>
