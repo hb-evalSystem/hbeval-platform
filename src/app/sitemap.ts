@@ -18,6 +18,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE}/pricing`,       lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     // Indexed on purpose. An enterprise evaluator looks for a status page
     // before they look at features, and not finding one is itself an answer.
+    { url: `${SITE}/science`,       lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE}/architecture`,  lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE}/demo`,          lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE}/status`,        lastModified: now, changeFrequency: 'daily',   priority: 0.6 },
     { url: `${SITE}/legal/terms`,   lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
     { url: `${SITE}/legal/privacy`, lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
