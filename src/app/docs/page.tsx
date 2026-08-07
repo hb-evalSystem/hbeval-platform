@@ -832,6 +832,35 @@ jobs:
               session counts and measured overhead — and signs it with Ed25519.
             </p>
             <p>
+              <strong className="text-slate-100">Label what produced the
+              numbers.</strong> A passport records how an agent behaved; without
+              provenance it does not record WHAT behaved. Swap the model and you
+              have a different agent — so pass these as session metadata and
+              they appear in every passport covering those runs:
+            </p>
+            <Code>{`with client.monitor(
+    agent_id="support-agent",
+    model="claude-sonnet-4",
+    model_version="20260514",
+    prompt_version="v2.1",
+    framework="langgraph",
+    commit=os.environ.get("GIT_SHA", "")[:7],
+) as session:
+    ...`}</Code>
+            <p>
+              If the model changes mid-window, the passport lists both values
+              and warns that the figures average across a change — because
+              sessions before and after describe different systems, and reading
+              them as one agent is a mistake.
+            </p>
+            <p>
+              HB-Eval cannot observe which model you used; it records what you
+              labelled. Fields left unlabelled read{' '}
+              <code className="code-inline">not recorded</code> rather than
+              disappearing, so a reader knows to ask you for them.
+            </p>
+
+            <p>
               Issue one from your agent&rsquo;s page in the dashboard. Publishing
               is a separate, explicit act that produces a public link, a QR code
               and a printable PDF, and can be withdrawn at any time.
