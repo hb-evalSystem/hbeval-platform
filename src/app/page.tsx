@@ -23,7 +23,7 @@ import Link from 'next/link'
 import {
   ArrowRight, Play, Activity, Beaker, Bell, Shield, GitBranch,
   BadgeCheck, Radio, Boxes, Globe, FileCode, Terminal, LineChart,
-  AlertTriangle, CheckCircle2, Database, MessageSquareQuote, Puzzle, Network,
+  AlertTriangle, CheckCircle2, Database, MessageSquareQuote, Puzzle, Network, Users,
 } from 'lucide-react'
 
 export const metadata = {
@@ -80,6 +80,9 @@ const CAPABILITIES = [
   { icon: LineChart, title: 'Observatory',
     body: 'Aggregate reliability across contributed runs. Anonymous at write time, withheld until five independent accounts.',
     href: '/observatory', cta: 'View the data' },
+  { icon: Users, title: 'Workspaces and audit export',
+    body: 'Roles for a team, and a one-call export of every automated decision your agents made — including the alerts that failed to deliver.',
+    href: '/docs#workspaces', cta: 'Audit export' },
   { icon: Network, title: 'How it fits together',
     body: 'Where your data goes, what leaves your machine, and what we can see — drawn from the implementation, not an intended design.',
     href: '/architecture', cta: 'See the architecture' },
