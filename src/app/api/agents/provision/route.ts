@@ -160,6 +160,12 @@ export async function POST(req: NextRequest) {
     agent: inserted,
     // shown once, Stripe-style:
     credentials: {
+      // Not a secret, but returned with them: all four values are needed to
+      // make a request, and the three secrets disappear once this screen is
+      // dismissed. Sending three and leaving the fourth to be found elsewhere
+      // is how somebody ends up with an incomplete .env and no way to tell
+      // which value is wrong.
+      agent_id: inserted.agent_id,
       api_key: secrets.apiKey,
       aes_key: secrets.aesKeyB64,
       signing_secret: secrets.signingSecretB64,
