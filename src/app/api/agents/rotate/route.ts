@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   // Ownership check: the agent must exist AND belong to this user.
   const { data: existing, error: findErr } = await supabaseAdmin
-    .from('agents').select('id, user_id').eq('id', agentId).single()
+    .from('agents').select('id, user_id, agent_id').eq('id', agentId).single()
   if (findErr || !existing) {
     return NextResponse.json({ error: 'Agent not found.' }, { status: 404 })
   }
@@ -61,6 +61,12 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     credentials: {
+      // Returned alongside the secrets although it is not one. The three
+      // secrets vanish after this reveal, and somebody copying them has no
+      // reason to also go hunting for the identifier — then finds their .env
+      // incomplete and cannot tell which of four values is wrong. Four fields
+      // are needed to make a request, so four fields are shown.
+      agent_id: existing.agent_id,
       api_key: secrets.apiKey,
       aes_key: secrets.aesKeyB64,
       signing_secret: secrets.signingSecretB64,
