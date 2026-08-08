@@ -7,6 +7,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import RotateKeys from './RotateKeys'
 import {
   Bot, Copy, Check, Eye, EyeOff, ArrowLeft, Activity,
   Shield, TrendingUp, AlertCircle, CheckCircle, XCircle,
@@ -553,6 +554,22 @@ export default function AgentDetailPage() {
               </tbody>
             </table>
             </div>
+          </div>
+        )}
+
+        {/* Key rotation.
+            The component and its API route have existed since the platform was
+            built; nothing ever imported it, so rotation was unreachable from
+            the interface. That was recorded as a deferred item and stayed
+            deferred until a user needed it after losing their credentials —
+            which is when an unreachable feature costs the most.
+
+            agent.id is the table primary key, which is what the rotate route
+            expects. agent.agent_id is the public identifier and would not
+            match. */}
+        {agent && (
+          <div className="mt-6">
+            <RotateKeys agentPk={agent.id} />
           </div>
         )}
       </div>
