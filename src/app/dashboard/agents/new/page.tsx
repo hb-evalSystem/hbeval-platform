@@ -30,6 +30,10 @@ export default function NewAgentPage() {
   const [agent, setAgent] = useState<CreatedAgent | null>(null)
   const [saved, setSaved] = useState(false)
   const [copied, setCopied] = useState<string>('')
+  // Surfaced rather than swallowed: if copying failed the user must be told to
+  // select the values by hand, before leaving a page that will never show them
+  // again.
+  const [copyFailed, setCopyFailed] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -54,10 +58,25 @@ export default function NewAgentPage() {
     setLoading(false)
   }
 
-  function copy(label: string, value: string) {
-    navigator.clipboard.writeText(value)
-    setCopied(label)
-    setTimeout(() => setCopied(''), 1500)
+  async function copy(label: string, value: string) {
+    // WHY THIS IS WRAPPED, AND WHY IT MATTERS MORE HERE THAN ANYWHERE ELSE
+    //
+    // navigator.clipboard throws on an insecure context, when permission is
+    // denied, and when the document has lost focus. Unwrapped, that exception
+    // reached React and unmounted the page — and this is the ONE page where
+    // that is unrecoverable, because these three secrets are shown exactly
+    // once and cannot be retrieved afterwards.
+    //
+    // A convenience button was destroying data the user could not get back.
+    // The failure is now contained, and the values stay on screen to be
+    // selected by hand.
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopied(label)
+      setTimeout(() => setCopied(''), 1500)
+    } catch {
+      setCopyFailed(true)
+    }
   }
 
   // ── Success view: show the three credentials exactly once ──
@@ -109,6 +128,21 @@ export default function NewAgentPage() {
             </div>
           ))}
         </div>
+
+        {/* Shown when the clipboard refused. Without it, a visitor presses
+            Copy, nothing lands in the clipboard, and they navigate away
+            believing they have secrets they do not have. */}
+        {copyFailed && (
+          <div className="rounded-lg p-3 mb-4"
+               style={{ background: 'rgba(251,191,36,0.10)',
+                        border: '1px solid rgba(251,191,36,0.35)' }}>
+            <p className="text-xs text-amber-200 leading-relaxed">
+              Your browser blocked the copy button. Select each value above and
+              copy it manually before leaving this page — these three secrets
+              are shown once and cannot be retrieved again.
+            </p>
+          </div>
+        )}
 
         <label className="flex items-center gap-2 text-sm text-slate-300 mb-5 cursor-pointer select-none">
           <input type="checkbox" checked={saved} onChange={e => setSaved(e.target.checked)} />
