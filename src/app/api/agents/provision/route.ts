@@ -102,11 +102,56 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (insErr || !inserted) {
-    // Unique-violation on agent_id or api_key, or any write error.
-    const msg = insErr?.message?.includes('duplicate')
-      ? 'That agent_id is already in use on your account. Choose another.'
-      : 'Could not create the agent. Please try again.'
-    return NextResponse.json({ error: msg }, { status: 400 })
+    // The database error is logged in full and a short code is returned.
+    //
+    // Previously this collapsed every failure into "Please try again", which
+    // told the user nothing and told the operator nothing either — the cause
+    // was discarded at the moment it was known. A missing column, a failed
+    // constraint and a duplicate id all looked identical, and diagnosing one
+    // meant guessing.
+    //
+    // The message stays generic because it is public and a database error can
+    // name schemas and columns. The code is what makes the log searchable.
+    console.error('[provision] insert failed', {
+      code: insErr?.code,
+      message: insErr?.message,
+      details: insErr?.details,
+      hint: insErr?.hint,
+      user: user.id,
+    })
+
+    if (insErr?.message?.includes('duplicate')
+        || insErr?.code === '23505') {
+      return NextResponse.json(
+        { error: 'That agent_id is already in use on your account. Choose another.' },
+        { status: 400 },
+      )
+    }
+
+    // Postgres error classes worth distinguishing, because each has a
+    // different fix and a user who sees "try again" will simply try again.
+    const CODE_HELP: Record<string, string> = {
+      // undefined_column — the schema is behind the code
+      '42703': 'The database schema is out of date for this deployment.',
+      // not_null_violation — a required column has no default
+      '23502': 'The database is missing a required default.',
+      // foreign_key_violation — a referenced row does not exist
+      '23503': 'A referenced record is missing.',
+      // insufficient_privilege
+      '42501': 'The server lacks permission to write this record.',
+    }
+    const detail = insErr?.code ? CODE_HELP[insErr.code] : undefined
+
+    return NextResponse.json(
+      {
+        error: detail
+          ? `${detail} Please report code ${insErr?.code}.`
+          : 'Could not create the agent. Please try again, and report code '
+            + `${insErr?.code ?? 'unknown'} if it persists.`,
+        code: insErr?.code ?? 'unknown',
+      },
+      { status: 400 },
+    )
   }
 
   // ── 7. Return plaintext secrets ONCE. They are not stored in plaintext and
