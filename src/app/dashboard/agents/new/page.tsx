@@ -13,7 +13,13 @@ import {
   ArrowLeft, Bot, Sparkles, Copy, Check, AlertTriangle, KeyRound,
 } from 'lucide-react'
 
-interface Credentials { api_key: string; aes_key: string; signing_secret: string }
+interface Credentials {
+  // Shown with the secrets although it is not one — see the provision route.
+  agent_id: string
+  api_key: string
+  aes_key: string
+  signing_secret: string
+}
 interface CreatedAgent { id: string; name: string; agent_id: string }
 
 export default function NewAgentPage() {
@@ -82,7 +88,8 @@ export default function NewAgentPage() {
   // ── Success view: show the three credentials exactly once ──
   if (creds && agent) {
     const rows: { label: string; key: keyof Credentials; hint: string }[] = [
-      { label: 'API Key',        key: 'api_key',        hint: 'Identifies your agent.' },
+      { label: 'Agent ID',       key: 'agent_id',       hint: 'Names your agent in every request. Not secret.' },
+      { label: 'API Key',        key: 'api_key',        hint: 'Authenticates your agent.' },
       { label: 'AES Key',        key: 'aes_key',        hint: 'Encrypts your payloads.' },
       { label: 'Signing Secret', key: 'signing_secret', hint: 'Signs your requests.' },
     ]
@@ -146,7 +153,7 @@ export default function NewAgentPage() {
 
         <label className="flex items-center gap-2 text-sm text-slate-300 mb-5 cursor-pointer select-none">
           <input type="checkbox" checked={saved} onChange={e => setSaved(e.target.checked)} />
-          I have saved all three credentials in a secure place.
+          I have saved all four values in a secure place.
         </label>
 
         <button disabled={!saved}
