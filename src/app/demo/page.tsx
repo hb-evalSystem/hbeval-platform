@@ -69,7 +69,7 @@ const LINE_COLOUR: Record<string, string> = {
 }
 
 const STEP_MS = 900
-const SDK_VERSION_PY = '2.8.0'
+const SDK_VERSION_PY = '2.9.0'
 
 function fmt(v: number | null | undefined): string {
   return v === null || v === undefined ? '—' : v.toFixed(2)
