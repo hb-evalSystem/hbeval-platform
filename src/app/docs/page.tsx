@@ -83,6 +83,7 @@ const NAV = [
   { href: '#otel', label: 'OpenTelemetry' },
   { href: '#studio', label: 'Fault Studio' },
   { href: '#evidence', label: 'Behavioural evidence' },
+  { href: '#verified', label: 'Verified evaluation' },
   { href: '#gate', label: 'CI gate' },
   { href: '#alerts', label: 'Alerting' },
   { href: '#production', label: 'Production guide' },
@@ -241,7 +242,7 @@ export default function DocsPage() {
                 <p className="text-sm text-slate-300 mb-2">
                   <span className="text-white font-medium">1. Install the SDK</span>
                 </p>
-                <Code lang="bash">pip install hb-eval-sdk==2.8.0</Code>
+                <Code lang="bash">pip install hb-eval-sdk==2.9.0</Code>
               </li>
               <li>
                 <p className="text-sm text-slate-300 mb-2">
@@ -469,6 +470,16 @@ print(m.summary)`}</Code>
 
 # Your agent runs unchanged. Spans it already emits become steps.`}</Code>
 
+            <p>
+              <strong className="text-slate-100">One judgement no trace can
+              make.</strong> IRS counts deliberate handling in three forms, and
+              spans show only two. An agent that refuses an unsafe instruction,
+              or declines to answer without a reliable source, emits no span
+              saying so — it simply does less, which from the outside looks
+              identical to giving up. Pass{' '}
+              <code className="code-inline">handled_deliberately=True</code> on
+              those steps, or derived IRS will understate your agent.
+            </p>
             <p>What is derived, and from what:</p>
             <ul>
               <li>A span recording an exception, or setting its status to ERROR,
@@ -672,6 +683,79 @@ report = client.evaluate_with_battery(task, my_agent, n_scenarios=30)`}</Code>
             </p>
           </Section>
 
+          <Section id="verified" title="Verified evaluation"
+                   kicker="Observed, Not Reported" icon={<ShieldCheck size={13} />}>
+            <p>
+              On every other path, the behavioural evidence behind a score comes
+              from your agent&rsquo;s own runner. That is useful and it has a
+              limit: an agent could report a re-plan it never performed, and
+              nothing in the pipeline would contradict it.
+            </p>
+            <p>
+              On the verified path, <strong className="text-slate-100">HB-Eval
+              calls your agent itself</strong>. You register an endpoint, the
+              platform runs the fault battery against it, and you are not in
+              the middle. The result records what was observed rather than what
+              was reported.
+            </p>
+
+            <h3 className="text-sm text-slate-100 mt-6 mb-2">
+              Five a month on the free plan
+            </h3>
+            <p>
+              Per account, not per agent, and counted separately from your
+              monthly evaluation allowance — spending your ordinary quota to
+              discover this exists would defeat the point.
+            </p>
+            <p>
+              Five is enough to do the thing that actually settles the question:
+              run the same agent both ways and read the two passports side by
+              side. One says{' '}
+              <code className="code-inline">agent_reported</code>; the other
+              does not.
+            </p>
+            <p>
+              A run that fails for our reasons — a timeout, an unreachable
+              endpoint, an internal error — is refunded. It gave you nothing, so
+              it costs nothing.
+            </p>
+
+            <Code>{`report = client.evaluate_verified(
+    agent_url="https://your-agent.example.com/run",
+    task={"system": "...", "question": "..."},
+    n_scenarios=18,
+)
+
+print(report["verified_trial"])
+# {'used_this_month': 1, 'remaining_this_month': 4, 'limit': 5, ...}`}</Code>
+
+            <p>
+              Every successful response carries the balance, so the limit never
+              arrives as a surprise in the middle of a script.
+            </p>
+
+            <h3 className="text-sm text-slate-100 mt-6 mb-2">
+              What it does and does not prove
+            </h3>
+            <p>
+              The platform observes the outer loop: whether your endpoint
+              answered, how long it took, and what it returned. That cannot be
+              shaped after the fact by the agent.
+            </p>
+            <p>
+              It does not observe your agent&rsquo;s internals. If your endpoint
+              reports its own retries and re-plans in the response, those are
+              still self-reported — verification raises the floor rather than
+              removing the question. The evidence provenance recorded with the
+              result says which is which, so nobody has to assume.
+            </p>
+            <p className="text-slate-400">
+              Your endpoint is checked against SSRF before any call is made, and
+              outbound requests are IP-pinned, timeout-bounded, redirect-refused
+              and size-capped.
+            </p>
+          </Section>
+
           <Section id="gate" title="CI gate — block a bad pull request"
                    kicker="Continuous Integration" icon={<GitPullRequest size={13} />}>
             <p>
@@ -687,7 +771,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: hb-evalSystem/hb-eval-sdk@v2.7.0
+      - uses: hb-evalSystem/hb-eval-sdk@v2.9.0
         env:
           HBEVAL_API_KEY: SECRET
           HBEVAL_AES_KEY: SECRET
@@ -1178,7 +1262,7 @@ const valid = await crypto.subtle.verify(
 
           <Section id="sdks" title="Python and TypeScript"
                    kicker="Two Clients, One Protocol" icon={<Boxes size={13} />}>
-            <Code lang="bash">{`pip install hb-eval-sdk==2.8.0      # Python — everything
+            <Code lang="bash">{`pip install hb-eval-sdk==2.9.0      # Python — everything
 npm install hb-eval-sdk-js          # Node — protocol and monitoring`}</Code>
 
             <p>
