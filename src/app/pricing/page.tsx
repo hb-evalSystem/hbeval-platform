@@ -18,6 +18,7 @@ const PLANS = [
       'All 5 reliability metrics (PEI, FRR, IRS, TI, CSI)',
       'Fault-injection battery (6 fault types × 6 domains)',
       'Local evaluation path (unverified results)',
+      '5 verified evaluations / month — platform-run, tamper-proof',
       'Full diagnostic guidance (why you failed + how to fix)',
       'EDM memory — 3 retrievals',
       'Full SDK access (hb-eval-sdk)',
@@ -26,7 +27,7 @@ const PLANS = [
       'Community support (GitHub)',
     ],
     missing: [
-      'Verified evaluation path (platform-run, tamper-proof)',
+      'Unlimited verified evaluations (free plan gets 5 a month)',
       'Reliability-tier credential (Meets Tier 1/2/3)',
       'HCI-EDM performance-grounded explanations',
       'Unlimited memory retrieval',
