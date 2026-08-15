@@ -24,6 +24,7 @@ import {
   ArrowRight, Play, Activity, Beaker, Bell, Shield, GitBranch,
   BadgeCheck, Radio, Boxes, Globe, FileCode, Terminal, LineChart,
   AlertTriangle, CheckCircle2, Database, MessageSquareQuote, Puzzle, Network, Users,
+  ShieldCheck,
 } from 'lucide-react'
 
 export const metadata = {
@@ -34,12 +35,12 @@ export const metadata = {
     + 'record anyone can verify.',
 }
 
-// Two numbers that were briefly one. The SDK moved to 2.8.0 when the battery
+// Two numbers that were briefly one. The SDK moved past 2.7.0 when the battery
 // runner learned to return behavioural evidence; the wire protocol did not
 // change, so the Gateway still speaks 2.7.0. Sharing a constant made the
 // footer claim a protocol version that does not exist the moment the SDK was
 // bumped.
-const PY_VERSION = '2.8.0'        // pip install hb-eval-sdk==
+const PY_VERSION = '2.9.0'        // pip install hb-eval-sdk==
 const PROTOCOL_VERSION = '2.7.0'  // wire protocol, unchanged
 const JS_VERSION = '0.1.1'
 
@@ -86,6 +87,9 @@ const CAPABILITIES = [
   { icon: LineChart, title: 'Observatory',
     body: 'Aggregate reliability across contributed runs. Anonymous at write time, withheld until five independent accounts.',
     href: '/observatory', cta: 'View the data' },
+  { icon: ShieldCheck, title: 'Verified evaluation',
+    body: 'HB-Eval calls your agent itself, so the result cannot be shaped by the agent. Five runs a month on the free plan — enough to compare against a self-reported one.',
+    href: '/docs#verified', cta: 'How verification differs' },
   { icon: Users, title: 'Workspaces and audit export',
     body: 'Roles for a team, and a one-call export of every automated decision your agents made — including the alerts that failed to deliver.',
     href: '/docs#workspaces', cta: 'Audit export' },
