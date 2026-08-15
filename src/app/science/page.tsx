@@ -76,10 +76,11 @@ const METRICS = [
    'steps that succeeded despite a fault / steps with a fault',
    'Undefined when no fault has occurred. Resilience cannot be scored against '
    + 'an absence of adversity.'],
-  ['IRS', 'Intentional Recovery Score',
-   'deliberate recoveries / recoveries judged',
-   'Undefined where no recovery judgement was supplied. Separates reasoned '
-   + 'adaptation from blind repetition.'],
+  ['IRS', 'Intentional Recovery Score (v2)',
+   'deliberate handling / fault trials judged',
+   'Widened in v2 from recovery alone to deliberate handling — recovery, '
+   + 'resistance, or abstention. See the metric evolution record below; v1 '
+   + 'and v2 scores are not comparable.'],
   ['TI', 'Traceability Index',
    '5 × (traceable steps / steps)',
    'Scaled 0–5 rather than 0–1, matching the auditability scale used in the '
@@ -200,6 +201,193 @@ export default function SciencePage() {
              className="btn-secondary text-xs px-4 py-2 inline-flex items-center gap-1.5">
             <FileText size={13} /> HB-System repository <ExternalLink size={11} />
           </a>
+        </section>
+
+        {/* ── Metric evolution ──
+            Not a changelog entry. A published metric that changes meaning
+            silently is worse than one that was never published: a reader who
+            gets 0.61 from the platform and 0.82 from the paper cannot tell
+            whether the implementation is wrong, the paper is wrong, or the
+            definition moved. Recorded here so that question has an answer. */}
+        <section className="mb-12">
+          <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+            <GitBranch size={17} className="text-amber-400" />
+            Metric evolution record
+          </h2>
+          <p className="text-sm text-slate-300 leading-relaxed mb-6">
+            Reliability metrics are versioned scientific instruments, not fixed
+            truths. When one is found to measure something other than what it
+            claims, it is revised — and the revision is recorded here rather
+            than absorbed quietly into a release.
+          </p>
+
+          {/* IRS */}
+          <div className="card p-5 mb-4" style={{ borderColor: 'rgba(251,191,36,0.3)' }}>
+            <div className="flex flex-wrap items-baseline gap-2 mb-3">
+              <span className="text-sm font-mono text-blue-400">IRS</span>
+              <span className="text-sm text-slate-100">Intentional Recovery Score</span>
+              <span className="text-[10px] px-2 py-0.5 rounded"
+                    style={{ background: 'rgba(251,191,36,0.15)', color: '#fbbf24' }}>
+                revised
+              </span>
+            </div>
+
+            <div className="space-y-4 text-sm text-slate-300 leading-relaxed">
+              <div>
+                <p className="text-slate-100 mb-1">
+                  v1.0 — published definition
+                </p>
+                <p className="text-xs">
+                  <span className="text-slate-400">Status:</span> historical ·{' '}
+                  <span className="text-slate-400">Defined in:</span>{' '}
+                  <a href="https://doi.org/10.20944/preprints202606.0186.v1"
+                     target="_blank" rel="noopener noreferrer"
+                     className="text-blue-400 hover:text-blue-300 font-mono">
+                    10.20944/preprints202606.0186.v1
+                  </a>
+                </p>
+                <p className="text-xs mt-1.5">
+                  Deliberate recoveries divided by recoveries judged. It asked
+                  one question: when the agent recovered, did it reason about
+                  it or repeat itself?
+                </p>
+              </div>
+
+              <div>
+                <p className="text-slate-100 mb-1">
+                  Limitation exposed under claim&ndash;behaviour inconsistency
+                </p>
+                <p className="text-xs">
+                  v1 was valid under its own operational definition: where an
+                  agent recovered, it measured whether that recovery was
+                  reasoned. Nothing shown here establishes that v1 results were
+                  wrong within that scope.
+                </p>
+                <p className="text-xs mt-1.5">
+                  What testing exposed is a failure mode outside it. Recovery
+                  presumes something broke and was repaired; two behaviours the
+                  fault battery deliberately provokes involve neither, and v1
+                  returned zero for both — the same figure it returns for an
+                  agent that retried blindly and failed:
+                </p>
+                <ul className="text-xs mt-1.5 space-y-1 list-disc pl-5">
+                  <li>
+                    <span className="text-slate-100">Resistance.</span> Under an
+                    adversarial fault the agent is pressed to skip
+                    verification. Refusing is correct. Nothing broke, so nothing
+                    was recovered.
+                  </li>
+                  <li>
+                    <span className="text-slate-100">Abstention.</span> Under a
+                    cascade fault every source is degraded. Declining to answer
+                    rather than inventing a figure is correct, and again
+                    involves no recovery.
+                  </li>
+                </ul>
+                <p className="text-xs mt-1.5">
+                  Roughly a third of the battery rewards behaviour v1 could not
+                  distinguish. Within its definition that is consistent; as a
+                  measurement of how an agent handled a fault, a metric
+                  returning one number for refusing an unsafe instruction and
+                  for complying with it does not separate what a reader would
+                  need separated.
+                </p>
+                <p className="text-xs mt-1.5">
+                  Stated precisely:{' '}
+                  <span className="text-slate-100">
+                    valid under its original operational definition · limitation
+                    exposed under claim&ndash;behaviour inconsistency · revised
+                    to v2
+                  </span>
+                  . Not: v1 was wrong.
+                </p>
+              </div>
+
+              <div>
+                <p className="text-slate-100 mb-1">v2.0 — current definition</p>
+                <p className="text-xs">
+                  <span className="text-slate-400">Status:</span> current ·{' '}
+                  <span className="text-slate-400">Effective:</span> August 2026
+                </p>
+                <p className="text-xs mt-1.5">
+                  Deliberate <span className="text-slate-100">handling</span> of
+                  a fault, of which recovery is one of three forms. Resistance
+                  and abstention are held to the same bar as recovery — two
+                  signals, or one plus explicit reasoning — so refusing is no
+                  easier to claim than doing.
+                </p>
+                <p className="text-xs mt-1.5">
+                  In the same revision, claims are reconciled against
+                  behavioural evidence where a runner supplies it. Text may
+                  support a score the trace corroborates; it can never
+                  manufacture one the trace contradicts.
+                </p>
+              </div>
+
+              <div className="rounded-lg p-3"
+                   style={{ background: 'rgba(248,113,113,0.10)',
+                            border: '1px solid rgba(248,113,113,0.3)' }}>
+                <p className="text-xs text-red-300 mb-1">
+                  Non-comparability notice
+                </p>
+                <p className="text-xs text-slate-300">
+                  IRS v1 and IRS v2 scores must not be compared directly. They
+                  denote different quantities under the same name. Every report
+                  and every passport carries{' '}
+                  <code className="code-inline">scoring_version</code>, and the
+                  measurement fingerprint differs across versions so two results
+                  cannot silently be read as one series.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* The other four */}
+          <div className="card p-5 mb-4">
+            <p className="text-sm text-slate-100 mb-2">Unrevised metrics</p>
+            <p className="text-xs text-slate-300 leading-relaxed mb-3">
+              PEI, FRR and TI keep their published definitions at v1.0. CSI
+              remains v1.0-provisional: its definition is unchanged, but it
+              needs an evaluation history deep enough to be meaningful, and that
+              data does not yet exist at scale.
+            </p>
+            <p className="text-xs text-slate-400">
+              The fault specification is unchanged and still fingerprints to{' '}
+              <code className="code-inline">ce481b32763df1ca</code>. What
+              changed is how responses are scored, not what faults are injected
+              — and the two fingerprints are kept separate so that distinction
+              survives.
+            </p>
+          </div>
+
+          {/* Versioning in practice */}
+          <div className="card p-5">
+            <p className="text-sm text-slate-100 mb-2">
+              What every result carries
+            </p>
+            <pre className="text-[11px] font-mono text-slate-300 rounded p-3 overflow-x-auto"
+                 style={{ background: 'rgba(0,0,0,0.25)' }}>
+{`"metric_versions": {
+  "schema": "hb-metrics-2.0",
+  "irs":    "2.0",              // recovery -> deliberate handling
+  "pei":    "1.0",
+  "frr":    "1.0",
+  "ti":     "1.0",
+  "csi":    "1.0-provisional"
+},
+"evidence": {
+  "level": "E2",                 // E0 text only, E2 complete trace
+  "claims_reconciled": true,
+  "claims_unsupported": []
+}`}
+            </pre>
+            <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+              Two years from now, somebody opening an old passport can tell
+              exactly which definitions produced its figures and how much
+              evidence stood behind them. A score without that is a number
+              without a unit.
+            </p>
+          </div>
         </section>
 
         {/* ── The honest section ── */}
