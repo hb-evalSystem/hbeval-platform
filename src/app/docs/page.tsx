@@ -241,7 +241,7 @@ export default function DocsPage() {
                 <p className="text-sm text-slate-300 mb-2">
                   <span className="text-white font-medium">1. Install the SDK</span>
                 </p>
-                <Code lang="bash">pip install hb-eval-sdk==2.7.0</Code>
+                <Code lang="bash">pip install hb-eval-sdk==2.8.0</Code>
               </li>
               <li>
                 <p className="text-sm text-slate-300 mb-2">
@@ -1178,7 +1178,7 @@ const valid = await crypto.subtle.verify(
 
           <Section id="sdks" title="Python and TypeScript"
                    kicker="Two Clients, One Protocol" icon={<Boxes size={13} />}>
-            <Code lang="bash">{`pip install hb-eval-sdk==2.7.0      # Python — everything
+            <Code lang="bash">{`pip install hb-eval-sdk==2.8.0      # Python — everything
 npm install hb-eval-sdk-js          # Node — protocol and monitoring`}</Code>
 
             <p>
