@@ -34,7 +34,13 @@ export const metadata = {
     + 'record anyone can verify.',
 }
 
-const PY_VERSION = '2.7.0'
+// Two numbers that were briefly one. The SDK moved to 2.8.0 when the battery
+// runner learned to return behavioural evidence; the wire protocol did not
+// change, so the Gateway still speaks 2.7.0. Sharing a constant made the
+// footer claim a protocol version that does not exist the moment the SDK was
+// bumped.
+const PY_VERSION = '2.8.0'        // pip install hb-eval-sdk==
+const PROTOCOL_VERSION = '2.7.0'  // wire protocol, unchanged
 const JS_VERSION = '0.1.1'
 
 const METRICS = [
@@ -547,7 +553,7 @@ with client.monitor(
             ))}
           </div>
           <p className="text-[11px] text-slate-500">
-            HB-Eval · Protocol {PY_VERSION} · Independent research project
+            HB-Eval · Protocol {PROTOCOL_VERSION} · Independent research project
           </p>
         </div>
       </footer>
