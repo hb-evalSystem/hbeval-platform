@@ -154,7 +154,7 @@ report = client.evaluate_with_battery(
 )
 print(report["verdict"], report["metrics"])`
 
-  const ciSnippet = `- uses: hb-evalSystem/hb-eval-sdk@v2.7.0
+  const ciSnippet = `- uses: hb-evalSystem/hb-eval-sdk@v2.9.0
   env:
     HBEVAL_API_KEY: \${{ secrets.HBEVAL_API_KEY }}
     HBEVAL_AES_KEY: \${{ secrets.HBEVAL_AES_KEY }}
