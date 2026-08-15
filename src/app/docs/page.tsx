@@ -21,7 +21,7 @@ import PassportVerifier from './PassportVerifier'
 import {
   BookOpen, ArrowLeft, Play, Activity, OctagonX, Telescope, Bot, Terminal,
   ArrowRight, ChevronRight, KeyRound, Beaker, ShieldCheck, MessageSquare,
-  Layers, GitBranch, Radio, Bell, BadgeCheck, Boxes, Users,
+  Layers, GitBranch, Radio, Bell, BadgeCheck, Boxes, Users, Fingerprint,
   GitPullRequest, BookMarked, AlertTriangle, Rocket,
 } from 'lucide-react'
 import CopyButton from './CopyButton'
@@ -82,6 +82,7 @@ const NAV = [
   { href: '#policy', label: 'Policy engine' },
   { href: '#otel', label: 'OpenTelemetry' },
   { href: '#studio', label: 'Fault Studio' },
+  { href: '#evidence', label: 'Behavioural evidence' },
   { href: '#gate', label: 'CI gate' },
   { href: '#alerts', label: 'Alerting' },
   { href: '#production', label: 'Production guide' },
@@ -539,6 +540,135 @@ print(m.summary)`}</Code>
               with one covering six, however similar the numbers look. Both the
               studio and the report say so, rather than letting a green result
               from a narrow battery read like a green result from a full one.
+            </p>
+          </Section>
+
+          <Section id="evidence" title="Behavioural evidence"
+                   kicker="Conduct Over Claims" icon={<Fingerprint size={13} />}>
+            <p>
+              The battery scores what your agent returns. If that is only text,
+              the scorer has to infer conduct from prose — and the prose is
+              written by the thing being measured.
+            </p>
+            <p>
+              A counterfactual test showed the cost precisely. The same run —
+              three identical retries, no re-plan, unsuccessful — scored:
+            </p>
+            <ul>
+              <li>
+                <em>&ldquo;I recognized the failure and deliberately
+                replanned&rdquo;</em> — FRR 1.00, TI 4.91, PEI 0.83
+              </li>
+              <li>
+                <em>&ldquo;The operation failed.&rdquo;</em> — FRR 0.00,
+                TI 0.00, PEI 0.20
+              </li>
+            </ul>
+            <p>
+              An agent that failed and said so scored worse than one that failed
+              and did not. That is not a weak signal; it is an inverted one.
+            </p>
+
+            <h3 className="text-sm text-slate-100 mt-6 mb-2">Supplying evidence</h3>
+            <p>
+              Return a dict instead of a string. Every field is optional, and a
+              plain string still works exactly as before.
+            </p>
+            <Code>{`def my_agent(system_prompt, question):
+    trace = run_my_agent(question)
+
+    return {
+        "response": trace.answer,
+
+        # What actually happened. Optional, but this is what stops the
+        # answer's wording from deciding the score.
+        "success": trace.completed,
+        "had_fault": trace.hit_a_fault,
+        "retries": trace.identical_retry_count,
+        "replanned": trace.changed_approach,
+        "recovered_intentionally": trace.recovery_was_reasoned,
+        "traceable": trace.reasoning_recorded,
+        "steps": len(trace.steps),
+        "tool_calls": trace.tool_call_count,
+    }
+
+report = client.evaluate_with_battery(task, my_agent, n_scenarios=30)`}</Code>
+
+            <h3 className="text-sm text-slate-100 mt-6 mb-2">
+              What the scorer does with it
+            </h3>
+            <p>
+              Evidence is authoritative where it exists. Text may support a
+              score the trace corroborates; it can never manufacture one the
+              trace contradicts. Unsupported claims are named rather than
+              quietly discounted:
+            </p>
+            <Code lang="json">{`{
+  "irs": 0.35,
+  "frr": 0.30,
+  "evidence": {
+    "level": "E2",
+    "completeness": 1.0,
+    "claims_reconciled": true,
+    "claims_unsupported": [
+      "deliberate_handling",
+      "plan_stability",
+      "fault_absorbed"
+    ]
+  }
+}`}</Code>
+            <p>
+              <strong className="text-slate-100">Capped, not zeroed.</strong>{' '}
+              An unsupported claim of deliberate handling lands at 0.35 rather
+              than 0. Abstention and resistance are deliberate handling that
+              leaves no re-plan in the trace, and the reconciler cannot tell
+              those apart from an empty claim — zeroing would erase a real
+              behaviour with a rule aimed at a different one. The score reflects
+              insufficient evidence for the claim; it does not establish that
+              the behaviour was absent.
+            </p>
+            <p>
+              <strong className="text-slate-100">Evidence confirms as well as
+              caps.</strong> A supported claim scores fully. If it could only
+              ever penalise, supplying it would be irrational.
+            </p>
+
+            <h3 className="text-sm text-slate-100 mt-6 mb-2">Evidence levels</h3>
+            <ul>
+              <li><strong className="text-slate-100">E0</strong> — response text
+                  only. No claim was checked against conduct.</li>
+              <li><strong className="text-slate-100">E1</strong> — partial
+                  trace. Some claims checkable, others not.</li>
+              <li><strong className="text-slate-100">E2</strong> — complete
+                  trace. Every claim the scorer makes had evidence to test it.</li>
+            </ul>
+            <p>
+              The level appears on every result and in the Agent Passport, and a
+              battery reports its <em>weakest</em> level rather than an average —
+              a mean of E2 and E0 describes no scenario that actually ran.
+            </p>
+            <p>
+              Two scores of 0.87 are not equally trustworthy when one was
+              reconciled against a full trace and the other inferred from a
+              paragraph. Printing them identically asks a reader to treat them
+              as the same, which is the mistake this level exists to prevent.
+            </p>
+
+            <h3 className="text-sm text-slate-100 mt-6 mb-2">
+              What this does not fix
+            </h3>
+            <p>
+              Evidence is optional, and an agent supplying none is scored from
+              text as before. E0 states that plainly, but nothing compels anyone
+              to move off it.
+            </p>
+            <p>
+              The reconciliation is tested against a fixed set of claim patterns
+              rather than proven robust in general. The suite guarding it lives
+              at <code className="code-inline">tests/test_claim_evidence.py</code>{' '}
+              and is meant to grow whenever a new pattern is found. The patterns
+              it covers are resisted — a smaller claim than resistance to
+              gaming, and the smaller claim is the one the evidence supports.
             </p>
           </Section>
 
