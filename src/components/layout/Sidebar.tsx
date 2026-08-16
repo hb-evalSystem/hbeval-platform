@@ -64,7 +64,7 @@ export default function Sidebar({ user, usage }: SidebarProps) {
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2 px-2 mb-8 text-white font-semibold">
         <Shield size={20} className="text-blue-500" />
-        <span>HB-Eval <span className="text-blue-500">OS</span></span>
+        <span>HB-Eval</span>
       </Link>
 
       {/* Navigation */}
@@ -137,7 +137,11 @@ export default function Sidebar({ user, usage }: SidebarProps) {
       </button>
 
       {/* Desktop sidebar — fixed, always visible at lg+ */}
-      <aside className="hidden lg:flex fixed left-0 top-0 h-full w-64 flex-col py-6 px-4 z-30"
+      {/* overflow-y-auto matters more than it looks: the account block and the
+          sign-out control sit at the bottom of navContent, and without a scroll
+          container they are simply clipped on a short window. A user cannot
+          sign out of an interface whose sign-out button is off-screen. */}
+      <aside className="hidden lg:flex fixed left-0 top-0 h-full w-64 flex-col py-6 px-4 z-30 overflow-y-auto"
              style={{ background: 'rgba(6,12,24,0.95)', borderRight: '1px solid rgba(255,255,255,0.06)',
                       backdropFilter: 'blur(16px)' }}>
         {navContent}
@@ -150,7 +154,7 @@ export default function Sidebar({ user, usage }: SidebarProps) {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                onClick={() => setOpen(false)} aria-hidden="true" />
           {/* Drawer */}
-          <aside className="absolute left-0 top-0 h-full w-72 max-w-[85vw] flex flex-col py-6 px-4 animate-slide-in"
+          <aside className="absolute left-0 top-0 h-full w-72 max-w-[85vw] flex flex-col py-6 px-4 overflow-y-auto animate-slide-in"
                  style={{ background: 'rgba(6,12,24,0.98)', borderRight: '1px solid rgba(255,255,255,0.08)' }}>
             <button onClick={() => setOpen(false)}
                     aria-label="Close menu"
