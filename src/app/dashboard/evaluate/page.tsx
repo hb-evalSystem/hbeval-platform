@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   Beaker, Shield, Server, Lock, Loader2, AlertTriangle, ArrowLeft, Play,
-  Copy, Check, Terminal,
+  Copy, Check, Terminal, ShieldCheck,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import BatteryReport, { BatteryReportData } from '@/components/ui/BatteryReport'
@@ -178,7 +178,14 @@ print("Verdict:", report["verdict"], "| saved to hbeval_report.json")`
   async function runVerified() {
     setError(''); setReport(null)
     if (!agentRowId) { setError('Select an agent first.'); return }
-    if (!isPaid) { setError('The verified path requires a paid plan.'); return }
+    // The plan check used to live here, which meant the browser refused before
+    // the request was ever made. Free accounts now have a monthly allowance of
+    // verified runs, and only the server knows how many are left — a client
+    // deciding for itself would either block a run the account is entitled to,
+    // or let one through and fail confusingly at the Gateway.
+    //
+    // The server answers with the balance on success, and an explanatory 402
+    // when it is exhausted. Both are more useful than a refusal made here.
     if (!agentUrl.trim()) { setError('Enter your agent endpoint URL.'); return }
     if (!consent) { setError('You must consent before the platform calls your agent.'); return }
 
@@ -388,13 +395,63 @@ print("Verdict:", report["verdict"], "| saved to hbeval_report.json")`
 
           <div className="mb-6 space-y-4">
             {!isPaid && (
-              <div className="flex items-start gap-2 rounded-lg p-3 text-xs"
-                   style={{ background: 'rgba(234,179,8,0.08)', color: '#fde68a' }}>
-                <Lock size={14} className="mt-0.5 shrink-0"/>
-                <span>The verified path requires a paid plan.{' '}
-                  <Link href="/pricing" className="underline">See pricing</Link>.</span>
+              <div className="rounded-lg p-3 text-xs space-y-2"
+                   style={{ background: 'rgba(59,130,246,0.08)',
+                            border: '1px solid rgba(59,130,246,0.25)',
+                            color: '#bfdbfe' }}>
+                <p className="flex items-start gap-2">
+                  <ShieldCheck size={14} className="mt-0.5 shrink-0" />
+                  <span>
+                    <strong className="text-blue-200">
+                      5 free verified evaluations a month
+                    </strong>{' '}
+                    on this account. This is the one path where HB-Eval calls
+                    your agent itself, so the result cannot be shaped by the
+                    agent — everywhere else the behavioural evidence comes from
+                    your own runner.
+                  </span>
+                </p>
+                <p className="text-slate-400">
+                  Run the same agent both ways and compare the two passports:
+                  one says <code className="code-inline">agent_reported</code>,
+                  the other does not. A run that fails for our reasons — a
+                  timeout, an unreachable endpoint — is refunded.
+                </p>
               </div>
             )}
+
+            {/* WHAT THIS PATH NEEDS, SAID BEFORE THE ATTEMPT
+                Verified evaluation requires an endpoint the platform can
+                reach. An agent running on somebody's laptop has no such
+                address, and discovering that through a connection error after
+                filling in a form is a poor way to learn it. */}
+            <div className="rounded-lg p-3 text-xs space-y-2"
+                 style={{ background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255,255,255,0.08)' }}>
+              <p className="text-slate-200">Before you start</p>
+              <p className="text-slate-400 leading-relaxed">
+                This path needs your agent reachable at a public HTTPS address —
+                the platform calls it, rather than you calling the platform. An
+                agent on your own machine cannot be reached, and localhost and
+                private network addresses are rejected before any request is
+                made.
+              </p>
+              <p className="text-slate-400 leading-relaxed">
+                No public endpoint yet? Use the local battery instead. It has no
+                cap and runs entirely on your side; the difference is that it
+                scores evidence your agent reports about itself, which the
+                result records honestly as{' '}
+                <code className="code-inline">agent_reported</code>.
+              </p>
+              <p className="text-slate-400 leading-relaxed">
+                Your endpoint should accept a POST with{' '}
+                <code className="code-inline">{'{ system, question }'}</code> and
+                return the agent&rsquo;s answer.{' '}
+                <Link href="/docs#verified" className="text-blue-400 hover:text-blue-300">
+                  Full contract
+                </Link>.
+              </p>
+            </div>
             <div>
               <label className="block text-xs text-slate-400 mb-1.5">Agent endpoint (public HTTPS)</label>
               <input value={agentUrl} onChange={e => setAgentUrl(e.target.value)}
