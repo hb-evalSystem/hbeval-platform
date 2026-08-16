@@ -4,6 +4,8 @@ import './globals.css'
 
 const SITE = 'https://hbeval.com'
 
+import SiteHeader from '@/components/layout/SiteHeader'
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
 
@@ -125,7 +127,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <SiteHeader />
+        {children}
+      </body>
     </html>
   )
 }
