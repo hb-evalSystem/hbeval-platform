@@ -237,6 +237,17 @@ export default function DocsPage() {
 
           {/* ── Quickstart ───────────────────────────────────────────────── */}
           <Section id="quickstart" title="Quickstart" kicker="Five Minutes" icon={<Play size={13} />}>
+            <p>
+              Everything below runs on the free plan, which is not a trial: 500
+              evaluations a month, all five metrics, the full fault battery,
+              live monitoring, Safe Halt and signed passports, with no time
+              limit. It also includes{' '}
+              <a href="#verified" className="text-blue-400 hover:text-blue-300">
+                five verified evaluations a month
+              </a>{' '}
+              — the path where HB-Eval calls your agent itself rather than
+              scoring what your agent reports about itself.
+            </p>
             <ol className="space-y-5">
               <li>
                 <p className="text-sm text-slate-300 mb-2">
