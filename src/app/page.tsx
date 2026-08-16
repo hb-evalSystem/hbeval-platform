@@ -106,7 +106,7 @@ export default function Home() {
     <div className="min-h-screen">
 
       {/* ── Hero ── */}
-      <section className="px-6 pt-20 pb-16">
+      <section className="px-6 pt-14 pb-16">
         <div className="max-w-4xl mx-auto text-center">
           <p className="section-label mb-4">Operational reliability for agentic AI</p>
           <h1 className="text-4xl sm:text-5xl font-bold text-white leading-tight mb-5">
@@ -459,6 +459,62 @@ with client.monitor(
               </a>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ── Plans ──
+          Placed after the capabilities rather than beside the hero: somebody
+          who has not yet understood what the thing measures has no basis for
+          comparing plans, and asking them to choose first is the wrong
+          question in the wrong order. */}
+      <section className="px-6 py-14" style={{ borderTop: '1px solid var(--border)' }}>
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-bold text-white mb-3">Plans</h2>
+          <p className="text-sm text-slate-300 leading-relaxed max-w-2xl mb-6">
+            The free plan is not a trial. It runs the full battery, all five
+            metrics, live monitoring and signed passports, with no time limit.
+          </p>
+
+          <div className="grid sm:grid-cols-2 gap-3 mb-4">
+            <div className="card p-5">
+              <p className="text-sm text-white mb-1">Free</p>
+              <p className="text-2xl text-white mb-3">$0</p>
+              <ul className="text-xs text-slate-400 space-y-1.5">
+                <li>500 evaluations a month, 3 agents</li>
+                <li>All five metrics, full fault battery</li>
+                <li>Live monitoring, Safe Halt, CI gate</li>
+                <li>Signed Agent Passports</li>
+                <li className="text-slate-200">5 verified evaluations a month</li>
+              </ul>
+            </div>
+            <div className="card p-5" style={{ borderColor: 'rgba(59,130,246,0.3)' }}>
+              <p className="text-sm text-white mb-1">Pro</p>
+              <p className="text-2xl text-white mb-3">Coming soon</p>
+              <ul className="text-xs text-slate-400 space-y-1.5">
+                <li>5,000 evaluations a month, 10 agents</li>
+                <li>Unlimited verified evaluations</li>
+                <li>Unlimited memory retrieval</li>
+                <li>Priority support</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="card p-4 mb-4" style={{ borderColor: 'rgba(59,130,246,0.25)' }}>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              <span className="text-slate-100">Why five verified runs are free.</span>{' '}
+              On every other path the behavioural evidence comes from your own
+              agent&rsquo;s runner. On the verified path HB-Eval calls your agent
+              itself, so the result cannot be shaped by the agent. That
+              difference is the strongest thing the paid tier offers and the
+              hardest to convey in a sentence — five runs is enough to see it
+              for yourself.
+            </p>
+          </div>
+
+          <Link href="/pricing"
+                className="text-sm text-blue-400 hover:text-blue-300 inline-flex items-center gap-1">
+            Full comparison <ArrowRight size={13} />
+          </Link>
         </div>
       </section>
 
