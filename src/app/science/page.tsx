@@ -342,11 +342,148 @@ export default function SciencePage() {
             </div>
           </div>
 
+          {/* PEI */}
+          <div className="card p-5 mb-4" style={{ borderColor: 'rgba(251,191,36,0.3)' }}>
+            <div className="flex flex-wrap items-baseline gap-2 mb-3">
+              <span className="text-sm font-mono text-blue-400">PEI</span>
+              <span className="text-sm text-slate-100">Planning Efficiency Index</span>
+              <span className="text-[10px] px-2 py-0.5 rounded"
+                    style={{ background: 'rgba(251,191,36,0.15)', color: '#fbbf24' }}>
+                revised
+              </span>
+            </div>
+
+            <div className="space-y-4 text-sm text-slate-300 leading-relaxed">
+              <div>
+                <p className="text-slate-100 mb-1">v1.0 &mdash; published definition</p>
+                <p className="text-xs">
+                  <span className="text-slate-400">Status:</span> historical.
+                  1 &minus; (re-plans / steps). It asked whether the plan held.
+                </p>
+              </div>
+
+              <div>
+                <p className="text-slate-100 mb-1">
+                  Limitation exposed by agent-level testing
+                </p>
+                <p className="text-xs">
+                  v1 was valid under its own definition: it measured plan
+                  stability, and measured it correctly. What testing exposed is
+                  that stability is not efficiency.
+                </p>
+                <p className="text-xs mt-1.5">
+                  Two agents built to differ were run against the same faults.
+                  The one that thrashed through three blind retries and never
+                  changed course scored{' '}
+                  <span className="font-mono text-amber-200">1.00</span>. The
+                  one that recognised the fault and adapted once scored{' '}
+                  <span className="font-mono text-amber-200">0.79</span>.
+                </p>
+                <p className="text-xs mt-1.5">
+                  A metric named for efficiency was rewarding rigidity as though
+                  it were skill &mdash; and an agent facing a changed
+                  environment often <em>should</em> change its plan.
+                </p>
+              </div>
+
+              <div>
+                <p className="text-slate-100 mb-1">v2.0 &mdash; current definition</p>
+                <p className="text-xs">
+                  <span className="text-slate-400">Status:</span> current ·{' '}
+                  <span className="text-slate-400">Effective:</span> August 2026
+                </p>
+                <code className="block text-[11px] font-mono text-slate-300 rounded px-3 py-2 my-2"
+                      style={{ background: 'rgba(0,0,0,0.25)' }}>
+                  PEI = 1 &minus; |fault_episodes &minus; plan_transitions| / steps
+                </code>
+                <p className="text-xs">
+                  Whether the amount of adaptation matched the amount of change
+                  that called for it. Two failures, penalised symmetrically:
+                  under-adaptation, where faults arrived and the plan never
+                  moved; and over-adaptation, where the plan kept moving with
+                  nothing driving it.
+                </p>
+                <p className="text-xs mt-1.5">
+                  Fault <em>episodes</em>, not faulted steps: one dependency
+                  failing across three consecutive steps is one problem needing
+                  one adaptation, not three. Plan transitions are observed from
+                  the trace rather than taken from a self-reported flag.
+                </p>
+                <p className="text-xs mt-1.5">
+                  <strong className="text-slate-100">PEI = 1.00 does not mean
+                  the agent did well.</strong> A session with no faults and no
+                  re-planning scores 1.00 whether it was flawless or did
+                  nothing. The metric is one of five for exactly this reason,
+                  and it deliberately does not measure whether the adaptation
+                  worked &mdash; that is FRR.
+                </p>
+              </div>
+
+              <div className="rounded-lg p-3"
+                   style={{ background: 'rgba(248,113,113,0.10)',
+                            border: '1px solid rgba(248,113,113,0.3)' }}>
+                <p className="text-xs text-red-300 mb-1">Non-comparability notice</p>
+                <p className="text-xs text-slate-300">
+                  PEI v1 and PEI v2 scores must not be compared directly. They
+                  measure different properties under the same name. Results
+                  carry <code className="code-inline">scoring_version</code> and
+                  a per-metric version table, and the measurement fingerprint
+                  differs across versions.
+                </p>
+              </div>
+
+              <div>
+                <p className="text-slate-100 mb-1">What has been established</p>
+                <p className="text-xs">
+                  v2 passes a deterministic invariant suite &mdash; six
+                  synthetic traces whose correct scores follow from the
+                  definition rather than from any agent &mdash; and separates
+                  the two test agents at the agent level.
+                </p>
+                <p className="text-xs mt-1.5">
+                  It has <strong className="text-slate-100">not</strong> been
+                  validated against trajectories from agents this team did not
+                  write. The invariants establish properties of the definition,
+                  which is a smaller claim than field validity, and the one the
+                  evidence supports.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Freeze */}
+          <div className="card p-5 mb-4" style={{ borderColor: 'rgba(59,130,246,0.3)' }}>
+            <p className="text-sm text-slate-100 mb-2">
+              Scoring is frozen at v3 for external validation
+            </p>
+            <p className="text-xs text-slate-300 leading-relaxed mb-2">
+              While independent operators run the battery, none of the metric
+              definitions, weights, thresholds or event-counting rules may
+              change &mdash; and no result may be reclassified after its output
+              has been seen.
+            </p>
+            <p className="text-xs text-slate-400 leading-relaxed mb-2">
+              Operators cannot be compared against each other if the instrument
+              moves between them. Worse, adjusting a metric after seeing what it
+              produced turns validation into a feedback loop that tunes the
+              measure to the sample &mdash; the failure this project already
+              spent weeks undoing inside the scorer.
+            </p>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              A defect found during the round is recorded and fixed afterwards.
+              The one exception is a defect that makes a run invalid rather than
+              merely wrong &mdash; a crash, corrupted output, or data not
+              recorded at all &mdash; since those produce no measurement worth
+              preserving. Afterwards: results, then failure analysis, then
+              metric review, then v4. In that order.
+            </p>
+          </div>
+
           {/* The other four */}
           <div className="card p-5 mb-4">
             <p className="text-sm text-slate-100 mb-2">Unrevised metrics</p>
             <p className="text-xs text-slate-300 leading-relaxed mb-3">
-              PEI, FRR and TI keep their published definitions at v1.0. CSI
+              FRR and TI keep their published definitions at v1.0. CSI
               remains v1.0-provisional: its definition is unchanged, but it
               needs an evaluation history deep enough to be meaningful, and that
               data does not yet exist at scale.
