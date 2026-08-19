@@ -103,16 +103,21 @@ const NAV = [
 // this page and the MCP tool answer the same question, and giving different
 // descriptions in two places is how documentation quietly starts lying.
 const METRICS = [
-  { key: 'PEI', name: 'Planning Efficiency Index', range: '0–1',
-    measures: 'Whether the plan is coherent and economical rather than wasteful. Repeated re-planning drives it down.' },
-  { key: 'FRR', name: 'Failure Resilience Rate', range: '0–1',
-    measures: 'Whether the agent keeps functioning when a fault is injected, rather than collapsing.' },
-  { key: 'IRS', name: 'Intentional Recovery Score', range: '0–1, or undefined',
-    measures: 'Whether recovery from failure was deliberate rather than accidental. Defined only on faulted episodes — recovery is meaningless with nothing to recover from.' },
-  { key: 'TI', name: 'Traceability Index', range: '0–5',
-    measures: "Whether the agent's behaviour can be followed and audited step by step." },
-  { key: 'CSI', name: 'Consistency Stability Index', range: '0–1, or undefined',
-    measures: 'Whether the agent behaves the same way across repeated runs, or drifts. Needs several runs, so it is undefined within a single session.' },
+  { key: 'PEI', name: 'Planning Efficiency Index', range: '0–1', version: '2.0',
+    asks: 'Did adaptation match the change that called for it?',
+    measures: 'Whether the amount of re-planning matched the amount of disruption. Two failures penalised symmetrically: never adapting when faults arrive, and adapting constantly with nothing driving it. Revised in v2 — v1 measured plan STABILITY and rewarded rigidity.' },
+  { key: 'FRR', name: 'Failure Resilience Rate', range: '0–1', version: '1.0',
+    asks: 'When a fault hit, did the step still complete?',
+    measures: 'Of the steps that met an injected fault, how many still finished. This is about the OUTCOME under fault, not about how the fault was handled — that is IRS.' },
+  { key: 'IRS', name: 'Intentional Recovery Score', range: '0–1, or undefined', version: '2.0',
+    asks: 'Was the fault handled deliberately, or met by reflex?',
+    measures: 'Whether the agent met the fault on purpose, in any of three forms: recovering, resisting an unsafe instruction, or declining to answer without a source. Defined only on faulted episodes. Widened in v2 — v1 counted recovery alone and scored refusing an unsafe instruction the same as complying with it.' },
+  { key: 'TI', name: 'Traceability Index', range: '0–5', version: '1.0',
+    asks: 'Can each decision be followed afterwards?',
+    measures: "Whether the agent's reasoning can be reconstructed step by step from what it recorded. A correct answer with no visible reasoning scores low, because an auditor cannot check it." },
+  { key: 'CSI', name: 'Consistency Stability Index', range: '0–1, or undefined', version: '1.0-provisional',
+    asks: 'Does the same task behave the same way across runs?',
+    measures: 'Whether behaviour holds steady across repeated evaluations, or drifts. Computed across STORED evaluations rather than within one, so a single session cannot produce it — the first run of any battery shows a dash. Provisional: the sensitivity coefficient is a reasoned starting point, not one calibrated on production data.' },
 ]
 
 export default function DocsPage() {
@@ -210,8 +215,24 @@ export default function DocsPage() {
                       <td className="py-3 pr-4 align-top">
                         <span className="text-white font-semibold">{m.key}</span>
                         <p className="text-[11px] text-slate-500 mt-0.5">{m.name}</p>
+                        {/* The version sits beside the name because two of
+                            these were redefined after publication, and a
+                            reader comparing an old result with a new one needs
+                            to see that before comparing anything. */}
+                        <p className="text-[10px] text-slate-600 mt-0.5 font-mono">
+                          v{m.version}
+                        </p>
                       </td>
-                      <td className="py-3 pr-4 text-slate-400 align-top">{m.measures}</td>
+                      <td className="py-3 pr-4 align-top">
+                        {/* The question first, the mechanics second. Three
+                            external operators said the acronym and a
+                            description of the calculation left them unable to
+                            tell what the number was for — one could not
+                            separate "the task failed" from "recovery failed",
+                            which is exactly what FRR and IRS divide. */}
+                        <p className="text-slate-200 mb-1">{m.asks}</p>
+                        <p className="text-slate-400">{m.measures}</p>
+                      </td>
                       <td className="py-3 text-slate-500 align-top whitespace-nowrap">{m.range}</td>
                     </tr>
                   ))}
@@ -233,6 +254,56 @@ export default function DocsPage() {
               to trustworthiness by excelling on some dimensions while failing a
               critical one.
             </p>
+
+            {/* CSI, on its own. All three external operators named it the
+                least clear of the five, and the reason is structural rather
+                than editorial: the other four are computed from one run, and
+                this one is not. A description that sits in a row alongside
+                them implies it behaves like them. */}
+            <div className="card p-5 mt-6">
+              <p className="text-sm text-slate-100 mb-2">
+                CSI works differently from the other four
+              </p>
+              <p className="text-xs text-slate-300 leading-relaxed mb-3">
+                PEI, FRR, IRS and TI are computed from a single run. CSI is not:
+                it measures whether behaviour <em>holds steady across runs</em>,
+                so it needs a history to compare against and cannot exist
+                without one.
+              </p>
+
+              <p className="text-xs text-slate-200 mb-1">What you will see</p>
+              <ul className="text-xs text-slate-400 space-y-1 mb-3 list-disc pl-5">
+                <li>
+                  <span className="font-mono text-slate-300">—</span> on your
+                  first evaluation. There is nothing to compare against yet.
+                  This is the metric working, not failing.
+                </li>
+                <li>
+                  A number from the second evaluation onward, computed over a
+                  window of the most recent stored evaluations.
+                </li>
+                <li>
+                  <span className="font-mono text-slate-300">—</span> on a
+                  monitoring passport. Passports aggregate live sessions, and
+                  consistency is measured across <em>evaluations</em>, not
+                  sessions.
+                </li>
+                <li>
+                  Movement between early runs. Three or four data points are not
+                  a trend, and the value will settle as the window fills.
+                </li>
+              </ul>
+
+              <p className="text-xs text-slate-200 mb-1">Why it is provisional</p>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                CSI carries a sensitivity coefficient that decides how sharply a
+                downward trend is penalised. That coefficient is a reasoned
+                starting point rather than one calibrated against production
+                data, and until it is, CSI is reported as{' '}
+                <code className="code-inline">1.0-provisional</code> and should
+                be read as an indicator rather than a measurement.
+              </p>
+            </div>
           </Section>
 
           {/* ── Quickstart ───────────────────────────────────────────────── */}
