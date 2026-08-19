@@ -67,12 +67,35 @@ interface Passport {
     monitoring_overhead_p50_ms: number | null
     monitoring_overhead_p99_ms: number | null
     note: string
+    metric_versions?: Record<string, string>
+    evidence?: {
+      level?: string
+      completeness?: number
+      source?: string
+      source_note?: string
+      claims_reconciled?: boolean
+      note?: string
+    }
   }
   signature: { signed: boolean; algorithm?: string; key_id?: string
                value?: string; content_sha256: string }
 }
 
 type VerifyState = 'checking' | 'valid' | 'invalid' | 'unavailable'
+
+// What each metric is asking, in the fewest words that stay true.
+//
+// Three operators independently said the acronyms alone were not enough, and
+// one could not tell task failure apart from recovery failure. These lines sit
+// under every figure so the distinction travels with the number rather than
+// living in documentation the reader may never open.
+const METRIC_ASKS: Record<string, string> = {
+  pei: 'Did adaptation match the change that called for it?',
+  frr: 'When a fault hit, did the step still complete?',
+  irs: 'Was the fault handled deliberately, or met by reflex?',
+  ti:  'Can each decision be followed afterwards?',
+  csi: 'Does the same task behave the same way across runs?',
+}
 
 const METRIC_ORDER = ['pei', 'frr', 'irs', 'ti', 'csi'] as const
 const METRIC_MAX: Record<string, number> = { pei: 1, frr: 1, irs: 1, ti: 5, csi: 1 }
@@ -298,8 +321,37 @@ export default function PublicPassportPage({ params }: { params: { token: string
 
         {/* Metrics */}
         <div className="rounded-xl p-5 mb-4" style={{ background: PAPER, border: `1px solid ${RULE}` }}>
-          <p className="text-[11px] tracking-[0.2em] mb-4" style={{ color: GOLD }}>
+          <p className="text-[11px] tracking-[0.2em] mb-2" style={{ color: GOLD }}>
             RELIABILITY
+          </p>
+
+          {/* WHERE THESE NUMBERS CAME FROM.
+              Three external operators independently could not tell how
+              per-round battery figures became passport figures — they are two
+              different measurement paths carrying the same metric names, and
+              nothing said so. A reader comparing a 0.95 from a battery run
+              against a 1.00 here has no way to know they are not the same
+              measurement disagreeing. */}
+          <p className="text-[11px] text-slate-500 mb-4 leading-relaxed">
+            Measured from <span className="text-slate-400">live monitoring
+            sessions</span> in this window — the agent running its own work,
+            step by step. Figures from a fault-battery run are a separate
+            measurement of a different thing, and the two are not directly
+            comparable even though they share these names.
+          </p>
+
+          {/* Wording tightened after an external operator's review. His
+              objection was precise: a figure can read as stronger than it is
+              when separated from the conditions that produced it, and
+              "reliability" generalises further than a fault battery supports.
+              His phrase is used here because it is more accurate than ours
+              was. */}
+          <p className="text-[11px] text-slate-500 mb-4 leading-relaxed">
+            These figures are{' '}
+            <span className="text-slate-400">
+              measured resilience under the conditions tested
+            </span>
+            , not a claim of reliability in general.
           </p>
           <div className="grid grid-cols-5 gap-2 mb-4">
             {METRIC_ORDER.map(k => {
@@ -317,6 +369,13 @@ export default function PublicPassportPage({ params }: { params: { token: string
                      style={{ color: undef ? '#64748b' : weakest ? '#fca5a5' : '#e2e8f0' }}>
                     {fmt(v, METRIC_MAX[k])}
                   </p>
+                  {/* One line per metric. An operator reported being unable to
+                      separate "the agent failed the task" from "the agent
+                      failed to recover" — a distinction FRR and IRS exist to
+                      draw, which the bare acronyms did not convey. */}
+                  <p className="text-[9px] text-slate-600 leading-tight px-1 mt-1">
+                    {METRIC_ASKS[k]}
+                  </p>
                 </div>
               )
             })}
@@ -330,10 +389,24 @@ export default function PublicPassportPage({ params }: { params: { token: string
             </p>
           )}
           {p.reliability.undefined.length > 0 && (
-            <p className="text-[11px] text-slate-500">
-              Never measured: {p.reliability.undefined.map(m => m.toUpperCase()).join(', ')}
-              {' '}— shown as a dash, not zero.
-            </p>
+            /* Raised from a grey footnote to a marked block. All three
+               operators were asked what the dash meant and none of them
+               mentioned it — it was not read as anything, which for a symbol
+               carrying "not measured" is worse than being misread. */
+            <div className="rounded-lg px-3 py-2 mt-2"
+                 style={{ background: 'rgba(148,163,184,0.08)',
+                          border: '1px solid rgba(148,163,184,0.2)' }}>
+              <p className="text-[11px] text-slate-300">
+                <span className="font-mono text-slate-400">—</span> means{' '}
+                <span className="text-slate-200">not measured</span>, not zero.
+              </p>
+              <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">
+                {p.reliability.undefined.map(m => m.toUpperCase()).join(', ')}
+                {' '}had no basis to be computed in this window. A zero would
+                claim a measured failure on something nothing examined, and an
+                auditor reading that zero would act on it.
+              </p>
+            </div>
           )}
         </div>
 
@@ -434,6 +507,74 @@ export default function PublicPassportPage({ params }: { params: { token: string
           <p className="text-[11px] text-slate-500 leading-relaxed">
             {p.reliability.evidence.note}
           </p>
+
+          {/* WHERE THE EVIDENCE CAME FROM.
+              This existed in the signed document and appeared nowhere a reader
+              would look. All three external operators saw an evidence level in
+              their output and none could say what it meant without going back
+              to a definition — a label that does not explain itself is a label
+              that does not work.
+
+              Depth and source answer different questions: how much evidence
+              there is, and how much it can be trusted. Two figures of 0.87 are
+              not equally trustworthy when one was checked against conduct and
+              the other inferred from what the agent said about itself. */}
+          {p.measurement?.evidence?.level && (
+            <div className="mt-4 pt-4" style={{ borderTop: `1px solid ${RULE}` }}>
+              <p className="text-[11px] tracking-[0.2em] mb-2" style={{ color: GOLD }}>
+                EVIDENCE SOURCE
+              </p>
+
+              <div className="flex items-center gap-2 mb-3">
+                {(['E0', 'E1', 'E2'] as const).map(lvl => {
+                  const here = p.measurement?.evidence?.level === lvl
+                  return (
+                    <div key={lvl} className="flex-1 rounded-lg px-2 py-2 text-center"
+                         style={{
+                           background: here ? 'rgba(59,130,246,0.12)'
+                                            : 'rgba(255,255,255,0.02)',
+                           border: `1px solid ${here ? 'rgba(59,130,246,0.35)'
+                                                     : 'transparent'}`,
+                         }}>
+                      <p className="text-xs font-mono"
+                         style={{ color: here ? '#93c5fd' : '#475569' }}>{lvl}</p>
+                      <p className="text-[9px] leading-tight mt-0.5"
+                         style={{ color: here ? '#94a3b8' : '#475569' }}>
+                        {lvl === 'E0' ? 'text only'
+                          : lvl === 'E1' ? 'partial trace'
+                          : 'complete trace'}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+
+              <p className="text-[11px] text-slate-300 mb-1">
+                <span className="font-mono text-slate-400">
+                  {p.measurement.evidence.source}
+                </span>
+                {typeof p.measurement.evidence.completeness === 'number' && (
+                  <span className="text-slate-500">
+                    {' '}· {(p.measurement.evidence.completeness * 100).toFixed(0)}%
+                    {' '}of the behavioural fields were present
+                  </span>
+                )}
+              </p>
+
+              {p.measurement.evidence.source_note && (
+                <p className="text-[10px] text-slate-500 leading-relaxed">
+                  {p.measurement.evidence.source_note}
+                </p>
+              )}
+
+              <p className="text-[10px] text-slate-500 leading-relaxed mt-2">
+                The level describes how COMPLETE the trace was. The source
+                describes how much of it was observed rather than reported.
+                A complete self-report and a complete observed trace are both
+                E2, and they are not the same evidence.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* What produced these numbers. A record of behaviour that does not
